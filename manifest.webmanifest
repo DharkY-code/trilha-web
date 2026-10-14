@@ -1,0 +1,21 @@
+{
+  "name": "Dhark Library — Biblioteca de Desenvolvimento",
+  "short_name": "Dhark Library",
+  "description": "Trilhas de estudo de desenvolvimento web, aulas, provas e caderno digital.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6f2",
+  "theme_color": "#142b26",
+  "categories": ["education", "books"],
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
