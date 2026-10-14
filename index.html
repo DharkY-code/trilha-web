@@ -389,7 +389,7 @@ function categoryLessonsDone(cat){return lessons.every((l,i)=>l.category!==cat||
 function renderLessons(){
  const filter=document.getElementById("track-filter");const catsOrdered=getCategories();
  if(filter){const old=filter.value;filter.innerHTML='';catsOrdered.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=(categoryUnlocked(c)?'':'🔒 ')+c;o.disabled=!categoryUnlocked(c);filter.appendChild(o)});filter.value=(old&&categoryUnlocked(old))?old:currentCategory()}
- renderCategoryOverview(catsOrdered);\n const chosen=filter?filter.value:currentCategory();const list=lessons.map((l,i)=>({...l,index:i})).filter(l=>l.category===chosen);
+ \n const chosen=filter?filter.value:currentCategory();const list=lessons.map((l,i)=>({...l,index:i})).filter(l=>l.category===chosen);
  document.getElementById("lesson-count-tag").textContent=list.length+" aula(s) · "+list.filter(l=>l.kind!=="Opcional").length+" obrigatórias";
  const done=categoryLessonsDone(chosen),passed=!!state.categoryPasses[chosen];
  const status=document.getElementById('lesson-list');
