@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#142b26">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dhark Library">
 <title>Dhark Library — Sua biblioteca de desenvolvimento</title>
 <style>
 :root{--bg:#f4f6f2;--panel:#fff;--ink:#182923;--muted:#65756d;--line:#e0e7e1;--green:#1f5948;--green-dark:#142b26;--mint:#d9eee2;--accent-ink:#235642;--accent-soft:#e4eee6;--accent-hover:#25463b;--accent-border:#355247;--gold:#f3c879;--blue:#e1ebfb;--shadow:0 10px 30px #20352a0c}
@@ -471,5 +476,25 @@ renderLevels();renderLessons();renderStats();renderTimeline();buildQuiz(state.qu
 const initialPage=(location.hash||'').replace('#','')||localStorage.getItem('dharkLibraryActivePage')||'inicio';showPage(initialPage,false);
 window.addEventListener('pagehide',()=>{try{localStorage.setItem('trilhaWebState',JSON.stringify(state))}catch(e){}});
 const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#7540a8';applyThemeColor(savedThemeColor,false);document.getElementById('theme-color').addEventListener('input',e=>setThemeColor(e.target.value));
+</script>
+<script>
+/* PWA: registro do service worker para instalação e uso offline. */
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js", {scope:"./"})
+      .then(reg => {
+        reg.update().catch(() => {});
+        reg.addEventListener("updatefound", () => {
+          const worker = reg.installing;
+          if (worker) worker.addEventListener("statechange", () => {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+              console.info("Nova versão da Dhark Library pronta. Reabra o aplicativo para atualizar.");
+            }
+          });
+        });
+      })
+      .catch(err => console.warn("Não foi possível preparar o modo offline:", err));
+  });
+}
 </script>
 </body></html>
