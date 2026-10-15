@@ -77,7 +77,7 @@ async function currentUser(request, env) {
   if (!token) return null;
   const tokenHash = await sha256(token);
   return env.DB.prepare(
-    "SELECT u.id, u.username, u.display_name, u.area FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > unixepoch()"
+    "SELECT u.id, u.username, u.display_name, u.area FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > unixepoch() AND u.status='active'"
   ).bind(tokenHash).first();
 }
 
@@ -85,6 +85,15 @@ async function requireUser(request, env) {
   const user = await currentUser(request, env);
   return user ? { user } : { response: json({ error: "Não autenticado." }, 401) };
 }
+
+
+async function adminUser(request, env) {
+ const auth=await requireUser(request,env); if(auth.response)return auth;
+ const row=await env.DB.prepare("SELECT role,status FROM users WHERE id=?").bind(auth.user.id).first();
+ if(!row||row.role!=="admin"||row.status!=="active")return {response:json({error:"Acesso restrito à conta administradora."},403)};
+ return {user:auth.user};
+}
+function inviteCode(){return "DHL-"+randomToken(9).replace(/[-_]/g,"").toUpperCase();}
 
 async function handleApi(request, env) {
   if (!env.DB) return json({ error: "Banco D1 não conectado. Configure o binding DB no Worker." }, 503);
@@ -140,6 +149,38 @@ async function handleApi(request, env) {
     }
   }
 
+
+  if (path === "/api/admin/setup" && request.method === "POST") {
+    if (!env.BOOTSTRAP_KEY) return json({error:"Configure BOOTSTRAP_KEY no Worker."},503);
+    const provided=request.headers.get("X-Setup-Key")||"";
+    if(provided.length<20||provided!==env.BOOTSTRAP_KEY)return json({error:"Chave de inicialização inválida."},403);
+    const count=await env.DB.prepare("SELECT COUNT(*) AS total FROM users").first();
+    if((count?.total||0)>0)return json({error:"A inicialização já foi feita."},409);
+    const body=await readJson(request), username=String(body?.username||"").trim().toLowerCase(), displayName=String(body?.displayName||"").trim(), password=typeof body?.password==="string"?body.password:"";
+    if(!/^[a-z0-9_-]{3,32}$/.test(username)||!displayName||password.length<8||password.length>128)return json({error:"Informe usuário válido, nome e senha de 8 a 128 caracteres."},400);
+    const {salt,hash}=await passwordHash(password);
+    await env.DB.prepare("INSERT INTO users (id,username,display_name,area,password_salt,password_hash,created_at,role,status) VALUES (?,?,?,'programacao',?,?,unixepoch(),'admin','active')").bind(crypto.randomUUID(),username,displayName,salt,hash).run();
+    return json({ok:true,message:"Conta administradora criada. Remova BOOTSTRAP_KEY após confirmar."},201);
+  }
+  if (path === "/api/signup" && request.method === "POST") {
+    const body=await readJson(request), code=String(body?.inviteCode||"").trim().toUpperCase(), username=String(body?.username||"").trim().toLowerCase(), displayName=String(body?.displayName||username).trim(), password=typeof body?.password==="string"?body.password:"", goal=String(body?.learningGoal||"").trim().slice(0,500), level=String(body?.level||""), area=String(body?.area||"programacao");
+    if(!code||!/^[a-z0-9_-]{3,32}$/.test(username)||!displayName||password.length<8||password.length>128||!goal||!["basico","intermediario","curso_completo"].includes(level)||!["programacao","vestibular","outro"].includes(area))return json({error:"Confira o convite e preencha todos os campos. Senha: 8 a 128 caracteres."},400);
+    const invite=await env.DB.prepare("SELECT id,max_uses,used_count FROM invites WHERE code_hash=? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>unixepoch()) AND used_count<max_uses").bind(await sha256(code)).first();
+    if(!invite)return json({error:"Convite inválido, expirado, revogado ou sem utilizações restantes."},403);
+    const {salt,hash}=await passwordHash(password), id=crypto.randomUUID();
+    try {
+      await env.DB.prepare("INSERT INTO users (id,username,display_name,area,password_salt,password_hash,created_at,role,status) VALUES (?,?,?,?,?,?,unixepoch(),'user','active')").bind(id,username,displayName,area,salt,hash).run();
+      await env.DB.prepare("INSERT INTO user_profiles (user_id,learning_goal,level) VALUES (?,?,?)").bind(id,goal,level).run();
+      const use=await env.DB.prepare("UPDATE invites SET used_count=used_count+1 WHERE id=? AND revoked_at IS NULL AND used_count<max_uses").bind(invite.id).run();
+      if(!use.meta?.changes){await env.DB.prepare("DELETE FROM users WHERE id=?").bind(id).run();return json({error:"Convite atingiu o limite. Peça outro código."},409);}
+      return json({ok:true,message:"Conta criada. Você já pode entrar."},201);
+    } catch(error) {
+      await env.DB.prepare("DELETE FROM users WHERE id=?").bind(id).run();
+      if(String(error?.message||"").includes("UNIQUE"))return json({error:"Nome de usuário já utilizado."},409);
+      throw error;
+    }
+  }
+
   if (path === "/api/login" && request.method === "POST") {
     const body = await readJson(request);
     const username = String(body?.username || "").trim().toLowerCase();
@@ -147,11 +188,12 @@ async function handleApi(request, env) {
     if (!/^[a-z0-9_-]{3,32}$/.test(username) || password.length < 1 || password.length > 128) {
       return json({ error: "Usuário ou senha inválidos." }, 400);
     }
-    const user = await env.DB.prepare("SELECT id, username, display_name, area, password_salt, password_hash FROM users WHERE username=?").bind(username).first();
+    const user = await env.DB.prepare("SELECT id, username, display_name, area, password_salt, password_hash, status FROM users WHERE username=?").bind(username).first();
     if (!user) {
       await passwordHash(password, "constant-time-placeholder-salt");
       return json({ error: "Usuário ou senha inválidos." }, 401);
     }
+    if(user.status!=="active")return json({error:"Esta conta está suspensa ou revogada."},403);
     const computed = await passwordHash(password, user.password_salt);
     if (computed.hash !== user.password_hash) return json({ error: "Usuário ou senha inválidos." }, 401);
     const token = randomToken();
@@ -168,6 +210,13 @@ async function handleApi(request, env) {
     if (token) await env.DB.prepare("DELETE FROM sessions WHERE token_hash=?").bind(await sha256(token)).run();
     return json({ ok: true }, 200, { "set-cookie": sessionCookie("", 0) });
   }
+
+
+  if(path==="/api/admin/invites"&&request.method==="GET"){const a=await adminUser(request,env);if(a.response)return a.response;const r=await env.DB.prepare("SELECT id,code_hint,max_uses,used_count,created_at,expires_at,revoked_at FROM invites ORDER BY created_at DESC LIMIT 200").all();return json({invites:r.results||[]});}
+  if(path==="/api/admin/invites"&&request.method==="POST"){const a=await adminUser(request,env);if(a.response)return a.response;const b=await readJson(request),type=b?.type==="single"?"single":b?.type==="multiple"?"multiple":"",max=type==="single"?1:Number(b?.maxUses);if(!type||!Number.isInteger(max)||max<1||max>10000)return json({error:"Escolha uso único ou limite entre 1 e 10000."},400);const code=inviteCode(),id=crypto.randomUUID();await env.DB.prepare("INSERT INTO invites (id,code_hash,code_hint,max_uses,used_count,created_by,created_at) VALUES (?,?,?,?,0,?,unixepoch())").bind(id,await sha256(code),code.slice(-4),max,a.user.id).run();return json({ok:true,invite:{id,code,maxUses:max,usedCount:0}},201);}
+  if(path.startsWith("/api/admin/invites/")&&request.method==="DELETE"){const a=await adminUser(request,env);if(a.response)return a.response;const id=path.slice("/api/admin/invites/".length),r=await env.DB.prepare("UPDATE invites SET revoked_at=unixepoch() WHERE id=? AND revoked_at IS NULL").bind(id).run();if(!r.meta?.changes)return json({error:"Convite não encontrado ou já revogado."},404);return json({ok:true});}
+  if(path==="/api/admin/users"&&request.method==="GET"){const a=await adminUser(request,env);if(a.response)return a.response;const r=await env.DB.prepare("SELECT u.id,u.username,u.display_name,u.area,u.status,u.created_at,p.learning_goal,p.level FROM users u LEFT JOIN user_profiles p ON p.user_id=u.id WHERE u.role='user' ORDER BY u.created_at DESC LIMIT 500").all();return json({users:r.results||[]});}
+  if(path.startsWith("/api/admin/users/")&&request.method==="PUT"){const a=await adminUser(request,env);if(a.response)return a.response;const id=path.slice("/api/admin/users/".length),b=await readJson(request),status=b?.status;if(!["active","suspended","revoked"].includes(status))return json({error:"Status inválido."},400);const r=await env.DB.prepare("UPDATE users SET status=? WHERE id=? AND role='user'").bind(status,id).run();if(!r.meta?.changes)return json({error:"Conta não encontrada."},404);if(status!=="active")await env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(id).run();return json({ok:true,status});}
 
   if (path === "/api/me" && request.method === "GET") {
     const auth = await requireUser(request, env);
