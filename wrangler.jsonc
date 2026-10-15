@@ -9,6 +9,16 @@
   "assets": {
     "directory": ".",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
-  }
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dhark-library-db",
+      "database_id": "1bc4d915-367c-4a41-be96-be33cc5f9c1d",
+      "migrations_dir": "migrations"
+    }
+  ]
 }
