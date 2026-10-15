@@ -118,7 +118,7 @@ button,a,input,select,textarea{max-width:100%;touch-action:manipulation}
    <button type="submit">Entrar</button>
   </form>
   <p id="auth-msg" role="status" aria-live="polite"></p>
-  <div class="auth-links"><a href="./cadastro.html">Tenho um convite</a><a href="./admin.html">Configuração administrativa</a></div>
+  <div class="auth-links"><a href="./cadastro.html">Tenho um convite</a><a id="auth-admin-setup-link" href="./admin.html" hidden>Configuração administrativa</a></div>
  </div>
 </section>
 
@@ -559,6 +559,8 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 (async function(){
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
  function showApp(){gate.style.display='none';if(app)app.style.setProperty('display','grid','important');}
+ const setupLink=document.getElementById("auth-admin-setup-link");
+ try{const setupResponse=await fetch("/api/admin/setup-status",{credentials:"same-origin",cache:"no-store"});if(setupResponse.ok){const setupState=await setupResponse.json();setupLink.hidden=!!setupState.initialized;}}catch(e){setupLink.hidden=true;}
  async function checkSession(){
   try{const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(r.ok){showApp();return true;}}catch(e){}
   gate.style.display='grid';if(app)app.style.setProperty('display','none','important');return false;
