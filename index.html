@@ -572,9 +572,10 @@ const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), m
  async function performAdminAction(b){
   b.disabled=true;const original=b.textContent;b.textContent='Processando…';msg.textContent='Processando solicitação…';
   try{
-   if(b.dataset.adminRevoke){if(!confirm('Revogar este convite?'))return;await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'DELETE'});msg.textContent='Convite revogado.';}
-   else if(b.dataset.adminUser){const action=b.dataset.adminStatus==='revoked'?'revogar a conta':b.dataset.adminStatus==='suspended'?'suspender a conta':'reativar a conta';if(!confirm('Deseja '+action+'?'))return;await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'PUT',body:JSON.stringify({status:b.dataset.adminStatus})});msg.textContent='Status da conta atualizado.';}
+   if(b.dataset.adminRevoke){const result=await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'POST',body:JSON.stringify({action:'revoke'})});msg.textContent=result.alreadyRevoked?'Este convite já estava revogado.':'Convite revogado com sucesso.';}
+   else if(b.dataset.adminUser){const status=b.dataset.adminStatus;const result=await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'POST',body:JSON.stringify({status})});msg.textContent=status==='revoked'?'Conta revogada com sucesso.':status==='suspended'?'Conta suspensa com sucesso.':'Conta reativada com sucesso.';}
    await loadAdmin();
+   msg.textContent='Ação concluída e lista atualizada.';
   }catch(err){msg.textContent='Não foi possível concluir: '+err.message}
   finally{b.disabled=false;b.textContent=original}
  }
