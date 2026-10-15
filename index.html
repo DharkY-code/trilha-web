@@ -87,7 +87,41 @@ button,a,input,select,textarea{max-width:100%;touch-action:manipulation}
 
 .video-panel{margin:18px 0;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}.video-frame{position:relative;width:100%;aspect-ratio:16/9;background:#10091a;border-radius:10px;overflow:hidden}.video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.lesson-content{line-height:1.75;overflow-wrap:anywhere}.lesson-content pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13px;overflow-x:auto}</style>
 </head>
-<body>
+<body>\n
+<style id="auth-gate-style">
+.app{display:none!important}
+#auth-gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at top,#eadcf8 0%,#f7f4fb 55%,#eee8f5 100%);font-family:Inter,system-ui,-apple-system,sans-serif;color:#241631}
+#auth-gate *{box-sizing:border-box}
+#auth-gate .auth-card{width:min(100%,440px);background:#fff;border:1px solid #e4d8ef;border-radius:24px;padding:clamp(24px,5vw,38px);box-shadow:0 18px 60px #35134b16}
+#auth-gate .auth-brand{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#7540a8;font-weight:800}
+#auth-gate h1{font-size:clamp(28px,6vw,36px);line-height:1.12;margin:10px 0}
+#auth-gate p{color:#6b5c78;line-height:1.55}
+#auth-gate label{display:block;font-weight:650;margin:14px 0 6px}
+#auth-gate input{width:100%;padding:13px;border:1px solid #d8cbe4;border-radius:11px;font:inherit}
+#auth-gate button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:11px;background:#7540a8;color:white;font:inherit;font-weight:750;cursor:pointer}
+#auth-gate .auth-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px}
+#auth-gate a{color:#7540a8;font-weight:650}
+#auth-gate #auth-msg{min-height:24px;color:#9d2c42;font-size:14px}
+#auth-gate .auth-mark{font-size:42px;margin-bottom:10px}
+</style>
+<section id="auth-gate" aria-label="Entrar no Dhark Library">
+ <div class="auth-card">
+  <div class="auth-mark" aria-hidden="true">📚</div>
+  <div class="auth-brand">Dhark Library</div>
+  <h1>Seu espaço de aprendizagem.</h1>
+  <p>Entre com sua conta para acessar suas trilhas, aulas, exercícios e cadernos.</p>
+  <form id="auth-login-form">
+   <label for="auth-username">Nome de usuário</label>
+   <input id="auth-username" name="username" autocomplete="username" required minlength="3" maxlength="32">
+   <label for="auth-password">Senha</label>
+   <input id="auth-password" name="password" type="password" autocomplete="current-password" required maxlength="128">
+   <button type="submit">Entrar</button>
+  </form>
+  <p id="auth-msg" role="status" aria-live="polite"></p>
+  <div class="auth-links"><a href="./cadastro.html">Tenho um convite</a><a href="./admin.html">Configuração administrativa</a></div>
+ </div>
+</section>
+
 <div class="app">
 <aside class="side">
   <div class="brand"><div class="brand-mark" role="img" aria-label="Livros da Dhark Library">📚</div> Dhark Library</div>
@@ -520,4 +554,28 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
   });
 }
 </script>
-</body></html>
+
+<script id="dhark-auth-gate-script">
+(async function(){
+ const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
+ function showApp(){gate.style.display='none';if(app)app.style.setProperty('display','grid','important');}
+ async function checkSession(){
+  try{const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(r.ok){showApp();return true;}}catch(e){}
+  gate.style.display='grid';if(app)app.style.setProperty('display','none','important');return false;
+ }
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();msg.textContent='Verificando acesso…';
+  const data=new FormData(form);
+  try{
+   const r=await fetch('/api/login',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({username:data.get('username'),password:data.get('password')})});
+   const result=await r.json().catch(()=>({}));
+   if(!r.ok)throw new Error(result.error||'Não foi possível entrar. Confira usuário e senha.');
+   msg.style.color='#176b3a';msg.textContent='Login realizado. Abrindo sua biblioteca…';
+   await checkSession();
+   if(gate.style.display!=='none')throw new Error('O servidor não confirmou sua sessão. Tente novamente.');
+  }catch(err){msg.style.color='#9d2c42';msg.textContent=err.message||'Falha de conexão. Tente novamente.';}
+ });
+ await checkSession();
+})();
+</script>
+\n</body></html>
