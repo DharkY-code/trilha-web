@@ -565,7 +565,7 @@ const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#7540a8';app
   }catch(e){msg.textContent=e.message;content.hidden=true}
  }
 const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), maxInput=$('admin-invite-max');
- function syncInviteType(){const single=inviteType.value==='single';maxField.hidden=single;maxInput.required=!single;maxInput.disabled=single;if(!single&&!maxInput.value)maxInput.value='10';}
+ function syncInviteType(){const single=inviteType.value==='single';maxField.hidden=single;maxField.style.display=single?'none':'grid';maxInput.required=!single;maxInput.disabled=single;if(!single&&!maxInput.value)maxInput.value='10';}
  inviteType.addEventListener('change',syncInviteType);syncInviteType();
   $('admin-invite-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const type=f.get('type');const maxUses=type==='single'?1:Number(f.get('maxUses'));try{const d=await api('/api/admin/invites',{method:'POST',body:JSON.stringify({type,maxUses})});$('admin-new-code').innerHTML='<div class="result"><strong>Convite criado — copie agora, ele não será exibido novamente:</strong><p><code>'+esc(d.invite.code)+'</code></p><button class="btn ghost small" id="admin-copy-code" type="button">Copiar código</button></div>';$('admin-copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(d.invite.code);msg.textContent='Código copiado.'}catch(_){msg.textContent='Selecione e copie o código manualmente.'}};await loadAdmin()}catch(err){msg.textContent=err.message}});
  $('admin-refresh-button').addEventListener('click',loadAdmin);
