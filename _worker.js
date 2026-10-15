@@ -150,6 +150,15 @@ async function handleApi(request, env) {
   }
 
 
+  if (path === "/api/admin/setup-status" && request.method === "GET") {
+    try {
+      const row = await env.DB.prepare("SELECT COUNT(*) AS total FROM users").first();
+      return json({ initialized: (row?.total || 0) > 0 });
+    } catch {
+      return json({ error: "Não foi possível verificar a configuração." }, 503);
+    }
+  }
+
   if (path === "/api/admin/setup" && request.method === "POST") {
     if (!env.BOOTSTRAP_KEY) return json({error:"Configure BOOTSTRAP_KEY no Worker."},503);
     const provided=request.headers.get("X-Setup-Key")||"";
