@@ -243,7 +243,7 @@ ORDER BY ano DESC;</code></pre></details></div>
   <div class="card" style="margin-top:16px"><h3>Gerar convite</h3>
    <form id="admin-invite-form" class="grid">
     <div class="field"><label for="admin-invite-type">Tipo</label><select id="admin-invite-type" name="type"><option value="single">Uso único</option><option value="multiple">Uso múltiplo</option></select></div>
-    <div class="field"><label for="admin-invite-max">Quantidade de cadastros</label><input id="admin-invite-max" name="maxUses" type="number" min="1" max="10000" value="10"></div>
+    <div class="field" id="admin-invite-max-field"><label for="admin-invite-max">Quantidade de cadastros</label><input id="admin-invite-max" name="maxUses" type="number" min="1" max="10000" value="10"></div>
     <div class="field" style="align-self:end"><button class="btn" type="submit">Gerar convite</button></div>
    </form><div id="admin-new-code" aria-live="polite"></div>
   </div>
@@ -564,7 +564,10 @@ const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#7540a8';app
    content.hidden=false;msg.textContent='Painel carregado.';
   }catch(e){msg.textContent=e.message;content.hidden=true}
  }
- $('admin-invite-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const type=f.get('type');const maxUses=type==='single'?1:Number(f.get('maxUses'));try{const d=await api('/api/admin/invites',{method:'POST',body:JSON.stringify({type,maxUses})});$('admin-new-code').innerHTML='<div class="result"><strong>Convite criado — copie agora, ele não será exibido novamente:</strong><p><code>'+esc(d.invite.code)+'</code></p><button class="btn ghost small" id="admin-copy-code" type="button">Copiar código</button></div>';$('admin-copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(d.invite.code);msg.textContent='Código copiado.'}catch(_){msg.textContent='Selecione e copie o código manualmente.'}};await loadAdmin()}catch(err){msg.textContent=err.message}});
+const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), maxInput=$('admin-invite-max');
+ function syncInviteType(){const single=inviteType.value==='single';maxField.hidden=single;maxInput.required=!single;maxInput.disabled=single;}
+ inviteType.addEventListener('change',syncInviteType);syncInviteType();
+  $('admin-invite-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const type=f.get('type');const maxUses=type==='single'?1:Number(f.get('maxUses'));try{const d=await api('/api/admin/invites',{method:'POST',body:JSON.stringify({type,maxUses})});$('admin-new-code').innerHTML='<div class="result"><strong>Convite criado — copie agora, ele não será exibido novamente:</strong><p><code>'+esc(d.invite.code)+'</code></p><button class="btn ghost small" id="admin-copy-code" type="button">Copiar código</button></div>';$('admin-copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(d.invite.code);msg.textContent='Código copiado.'}catch(_){msg.textContent='Selecione e copie o código manualmente.'}};await loadAdmin()}catch(err){msg.textContent=err.message}});
  $('admin-refresh-button').addEventListener('click',loadAdmin);
  document.addEventListener('click',async e=>{const b=e.target.closest('[data-admin-revoke],[data-admin-user]');if(!b)return;try{if(b.dataset.adminRevoke){if(!confirm('Revogar este convite?'))return;await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'DELETE'});}else if(b.dataset.adminUser){if(!confirm('Confirmar alteração do acesso desta conta?'))return;await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'PUT',body:JSON.stringify({status:b.dataset.adminStatus})});}await loadAdmin()}catch(err){msg.textContent=err.message}});
  document.querySelector('.nav button[data-page="admin"]')?.addEventListener('click',loadAdmin);
