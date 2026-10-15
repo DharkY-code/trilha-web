@@ -77,7 +77,7 @@ async function currentUser(request, env) {
   if (!token) return null;
   const tokenHash = await sha256(token);
   return env.DB.prepare(
-    "SELECT u.id, u.username, u.display_name, u.area FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > unixepoch() AND u.status='active'"
+    "SELECT u.id, u.username, u.display_name, u.area, u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > unixepoch() AND u.status='active'"
   ).bind(tokenHash).first();
 }
 
