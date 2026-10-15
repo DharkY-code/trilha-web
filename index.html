@@ -569,7 +569,16 @@ const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), m
  inviteType.addEventListener('change',syncInviteType);syncInviteType();
   $('admin-invite-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const type=f.get('type');const maxUses=type==='single'?1:Number(f.get('maxUses'));try{const d=await api('/api/admin/invites',{method:'POST',body:JSON.stringify({type,maxUses})});$('admin-new-code').innerHTML='<div class="result"><strong>Convite criado — copie agora, ele não será exibido novamente:</strong><p><code>'+esc(d.invite.code)+'</code></p><button class="btn ghost small" id="admin-copy-code" type="button">Copiar código</button></div>';$('admin-copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(d.invite.code);msg.textContent='Código copiado.'}catch(_){msg.textContent='Selecione e copie o código manualmente.'}};await loadAdmin()}catch(err){msg.textContent=err.message}});
  $('admin-refresh-button').addEventListener('click',loadAdmin);
- document.addEventListener('click',async e=>{const b=e.target.closest('[data-admin-revoke],[data-admin-user]');if(!b)return;try{if(b.dataset.adminRevoke){if(!confirm('Revogar este convite?'))return;await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'DELETE'});}else if(b.dataset.adminUser){if(!confirm('Confirmar alteração do acesso desta conta?'))return;await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'PUT',body:JSON.stringify({status:b.dataset.adminStatus})});}await loadAdmin()}catch(err){msg.textContent=err.message}});
+ async function performAdminAction(b){
+  b.disabled=true;const original=b.textContent;b.textContent='Processando…';msg.textContent='Processando solicitação…';
+  try{
+   if(b.dataset.adminRevoke){if(!confirm('Revogar este convite?'))return;await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'DELETE'});msg.textContent='Convite revogado.';}
+   else if(b.dataset.adminUser){const action=b.dataset.adminStatus==='revoked'?'revogar a conta':b.dataset.adminStatus==='suspended'?'suspender a conta':'reativar a conta';if(!confirm('Deseja '+action+'?'))return;await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'PUT',body:JSON.stringify({status:b.dataset.adminStatus})});msg.textContent='Status da conta atualizado.';}
+   await loadAdmin();
+  }catch(err){msg.textContent='Não foi possível concluir: '+err.message}
+  finally{b.disabled=false;b.textContent=original}
+ }
+ ['admin-invites-list','admin-users-list'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('[data-admin-revoke],[data-admin-user]');if(b)performAdminAction(b)}));
  document.querySelector('.nav button[data-page="admin"]')?.addEventListener('click',loadAdmin);
 })();
 </script>
