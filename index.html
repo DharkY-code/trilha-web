@@ -99,8 +99,10 @@ button,a,input,select,textarea{max-width:100%;touch-action:manipulation}
 #auth-gate label{display:block;font-weight:650;margin:14px 0 6px}
 #auth-gate input{width:100%;padding:13px;border:1px solid #d8cbe4;border-radius:11px;font:inherit}
 #auth-gate button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:11px;background:#7540a8;color:white;font:inherit;font-weight:750;cursor:pointer}
-#auth-gate .auth-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px}
-#auth-gate a{color:#7540a8;font-weight:650}
+#auth-gate .auth-links{display:grid;gap:12px;margin-top:16px}
+#auth-gate .signup-link{display:block;text-align:center;padding:13px 14px;border:2px solid #7540a8;border-radius:11px;background:#f4eaff;color:#57218a;font-weight:800;text-decoration:none;line-height:1.35}
+#auth-gate .signup-link:hover{background:#ead8ff}
+#auth-gate .admin-link{display:block;text-align:center;font-size:13px;margin-top:4px;color:#7540a8;font-weight:650}
 #auth-gate #auth-msg{min-height:24px;color:#9d2c42;font-size:14px}
 #auth-gate .auth-mark{font-size:42px;margin-bottom:10px}
 </style>
@@ -118,7 +120,7 @@ button,a,input,select,textarea{max-width:100%;touch-action:manipulation}
    <button type="submit">Entrar</button>
   </form>
   <p id="auth-msg" role="status" aria-live="polite"></p>
-  <div class="auth-links"><a href="./cadastro.html">Tenho um convite</a><a id="auth-admin-setup-link" href="./admin.html" hidden>Configuração administrativa</a></div>
+  <div class="auth-links"><a class="signup-link" href="./cadastro.html">Não tem uma conta? Cadastre-se com um convite</a><a class="admin-link" id="auth-admin-setup-link" href="./admin.html" hidden>Configuração inicial da administração</a></div>
  </div>
 </section>
 
