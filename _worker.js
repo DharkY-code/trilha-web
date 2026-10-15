@@ -1,5 +1,5 @@
 const SESSION_DAYS = 14;
-const PBKDF2_ITERATIONS = 310000;
+const PBKDF2_ITERATIONS = 100000;
 const encoder = new TextEncoder();
 
 function json(data, status = 200, extraHeaders = {}) {
