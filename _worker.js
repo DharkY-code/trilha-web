@@ -163,13 +163,18 @@ async function handleApi(request, env) {
     if (!env.BOOTSTRAP_KEY) return json({error:"Configure BOOTSTRAP_KEY no Worker."},503);
     const provided=request.headers.get("X-Setup-Key")||"";
     if(provided.length<20||provided!==env.BOOTSTRAP_KEY)return json({error:"Chave de inicialização inválida."},403);
-    const count=await env.DB.prepare("SELECT COUNT(*) AS total FROM users").first();
-    if((count?.total||0)>0)return json({error:"A inicialização já foi feita."},409);
-    const body=await readJson(request), username=String(body?.username||"").trim().toLowerCase(), displayName=String(body?.displayName||"").trim(), password=typeof body?.password==="string"?body.password:"";
-    if(!/^[a-z0-9_-]{3,32}$/.test(username)||!displayName||password.length<8||password.length>128)return json({error:"Informe usuário válido, nome e senha de 8 a 128 caracteres."},400);
-    const {salt,hash}=await passwordHash(password);
-    await env.DB.prepare("INSERT INTO users (id,username,display_name,area,password_salt,password_hash,created_at,role,status) VALUES (?,?,?,'programacao',?,?,unixepoch(),'admin','active')").bind(crypto.randomUUID(),username,displayName,salt,hash).run();
-    return json({ok:true,message:"Conta administradora criada. Remova BOOTSTRAP_KEY após confirmar."},201);
+    try {
+      const count=await env.DB.prepare("SELECT COUNT(*) AS total FROM users").first();
+      if((count?.total||0)>0)return json({error:"A inicialização já foi feita."},409);
+      const body=await readJson(request), username=String(body?.username||"").trim().toLowerCase(), displayName=String(body?.displayName||"").trim(), password=typeof body?.password==="string"?body.password:"";
+      if(!/^[a-z0-9_-]{3,32}$/.test(username)||!displayName||password.length<8||password.length>128)return json({error:"Informe usuário válido, nome e senha de 8 a 128 caracteres."},400);
+      const {salt,hash}=await passwordHash(password);
+      await env.DB.prepare("INSERT INTO users (id,username,display_name,area,password_salt,password_hash,created_at,role,status) VALUES (?,?,?,'programacao',?,?,unixepoch(),'admin','active')").bind(crypto.randomUUID(),username,displayName,salt,hash).run();
+      return json({ok:true,message:"Conta administradora criada. Remova BOOTSTRAP_KEY após confirmar."},201);
+    } catch (error) {
+      console.error("Admin setup failed", error?.stack || error?.message || error);
+      return json({error:"Falha ao criar a conta administradora. Consulte os logs do Worker pelo evento Admin setup failed."},500);
+    }
   }
   if (path === "/api/signup" && request.method === "POST") {
     const body=await readJson(request), code=String(body?.inviteCode||"").trim().toUpperCase(), username=String(body?.username||"").trim().toLowerCase(), displayName=String(body?.displayName||username).trim(), password=typeof body?.password==="string"?body.password:"", goal=String(body?.learningGoal||"").trim().slice(0,500), level=String(body?.level||""), area=String(body?.area||"programacao");
