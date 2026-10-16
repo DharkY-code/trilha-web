@@ -230,7 +230,7 @@ async function handleApi(request, env) {
       env.DB.prepare("DELETE FROM progress WHERE user_id=?").bind(userId),
       env.DB.prepare("DELETE FROM user_profiles WHERE user_id=?").bind(userId),
       env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(userId),
-      env.DB.prepare("UPDATE invites SET created_by=NULL WHERE created_by=?").bind(userId),
+      env.DB.prepare("DELETE FROM invites WHERE created_by=?").bind(userId),
       env.DB.prepare("DELETE FROM users WHERE id=?").bind(userId)
     ]);
     return json({ ok: true, deleted: true }, 200, { "set-cookie": sessionCookie("", 0) });
