@@ -311,11 +311,11 @@ async function handleApi(request, env) {
     return json({ok:true,status,previousStatus:user.status});
   }
 
-  // Gemini: chave apenas no Worker; chamadas autenticadas e quota por usuário/dia.
+  // GroqCloud: chave apenas no Worker; chamadas autenticadas e quota por usuário/dia.
   if (path === "/api/ai" && request.method === "POST") {
     const auth = await requireUser(request, env);
     if (auth.response) return auth.response;
-    if (!env.GEMINI_API_KEY) return json({ error: "IA ainda não configurada. Configure o segredo GEMINI_API_KEY no Cloudflare." }, 503);
+    if (!env.GROQ_API_KEY) return json({ error: "IA ainda não configurada. Configure o segredo GROQ_API_KEY no Cloudflare." }, 503);
     const size = Number(request.headers.get("content-length") || 0);
     if (size > 18000) return json({ error: "Mensagem muito grande." }, 413);
     const b = await readJson(request);
@@ -337,78 +337,65 @@ async function handleApi(request, env) {
     if (!quota) return json({ error: "Limite diário de 30 solicitações atingido. Tente novamente amanhã." }, 429);
     const instructions = {
       tutor: "Você é o tutor da Dhark Library. Responda em português brasileiro com didática, exemplos concretos e uma sugestão de exercício. Ajude a pessoa a pensar; não invente fatos. Se não tiver certeza, diga.",
-      lesson: "Você é designer instrucional da Dhark Library. Crie uma aula original em português brasileiro sobre o tema solicitado, para o nível indicado. Use os títulos: Objetivos, Pré-requisitos, Fundamentos e conceitos, Explicação detalhada passo a passo, Pelo menos três exemplos resolvidos e comentados, Erros comuns e como evitá-los, Aplicações no mundo real, Atividade prática, Questões de revisão (3 perguntas), Resumo e Próximos passos. Produza uma aula aprofundada e didática, com explicações extensas e precisas; não entregue apenas tópicos ou resumos. Consulte os resultados de pesquisa na web quando disponíveis, use fontes confiáveis e inclua referências verificáveis. Não invente URLs, autores, livros, citações ou trechos. Se não houver fontes verificadas, avise explicitamente. Para alfabetos estrangeiros, introduza primeiro os símbolos, transliteração, pronúncia aproximada e exemplos antes de exigir leitura ou pronúncia. O tema pode ser qualquer assunto educacional apropriado. Não afirme que a aula foi verificada por especialista.",
+      lesson: "Você é designer instrucional da Dhark Library. Crie uma aula original em português brasileiro sobre o tema solicitado, para o nível indicado. Use os títulos: Objetivos, Pré-requisitos, Fundamentos e conceitos, Explicação detalhada passo a passo, Pelo menos três exemplos resolvidos e comentados, Erros comuns e como evitá-los, Aplicações no mundo real, Atividade prática, Questões de revisão (3 perguntas), Resumo e Próximos passos. Produza uma aula aprofundada e didática, com explicações extensas e precisas; não entregue apenas tópicos ou resumos. Você não possui acesso à pesquisa na web nesta integração. Não afirme ter pesquisado fontes nem invente URLs, autores, livros, citações ou trechos. Oriente o aluno a verificar informações que exigem atualização em fontes confiáveis. Para alfabetos estrangeiros, introduza primeiro os símbolos, transliteração, pronúncia aproximada e exemplos antes de exigir leitura ou pronúncia. O tema pode ser qualquer assunto educacional apropriado. Não afirme que a aula foi verificada por especialista.",
       track: 'Você cria trilhas educacionais personalizadas sobre qualquer área. Responda SOMENTE JSON válido com {"title":"...","modules":[{"title":"...","description":"...","lessons":[{"title":"...","content":"...","exercise":"..."}]}]}. O campo Nível define a profundidade: basico = 3 módulos com 2 aulas introdutórias por módulo; intermediario = 4 módulos com 3 aulas por módulo, partindo de pré-requisitos essenciais e avançando a conceitos intermediários; curso_completo = 4 módulos com 3 aulas por módulo NESTA ETAPA, compondo uma sequência de muitas etapas que serão solicitadas depois. No curso completo, comece pelos fundamentos e evolua sistematicamente até conteúdos avançados, cobrindo toda a amplitude relevante do assunto e objetivos. Quando Contexto fornecido trouxer módulos já gerados, NÃO os repita; continue de onde parou. Planeje aulas originais em português brasileiro, cada uma com introdução, explicação conceitual passo a passo, pelo menos dois exemplos resolvidos e um exercício, adequadas ao tema, objetivos e dificuldades. Não reduza aulas a frases soltas. As aulas do plano são resumos curriculares; a aula completa será produzida separadamente com pesquisa e fontes. Nunca peça para o iniciante pronunciar ou resolver algo sem ensinar previamente os símbolos e pré-requisitos. Evite assuntos não solicitados. Não use HTML nem invente fontes.',
       assessment: 'Você é elaborador de questões inéditas e originais para avaliação educacional. Responda SOMENTE JSON válido: {"questions":[{"title":"...","question":"...","hint":"...","reference":"..."}]}. Crie 5 questões novas sobre os conceitos e títulos fornecidos, variadas e adequadas ao nível do aluno. NÃO copie nem reformule superficialmente as atividades das aulas. Evite perguntas sobre programação quando o tema não for programação. Para prática, hint deve ser uma dica útil sem entregar a resposta; para prova, hint deve ser uma string vazia. reference deve conter uma orientação resumida de resposta correta para correção, não para exibir ao estudante antes da correção. Não inclua markdown fora do JSON.',
       grade: "Você é avaliador formativo da Dhark Library. Compare a pergunta e o contexto com a resposta do estudante. Retorne: Veredito (correta/parcial/incorreta/incerta), Justificativa, Pontos fortes, O que melhorar, Resposta-modelo. Considere respostas alternativas válidas e não afirme certeza quando a questão for ambígua. Não altere notas ou progresso."
     };
     const prompt = "Tema: " + topic + "\nNível: " + level + "\nPergunta ou objetivo: " + question + "\nContexto fornecido: " + context + (mode === "grade" ? "\nResposta do estudante: " + answer : "");
-    // Descobrir modelos realmente habilitados para esta chave quando o padrão
-    // retorna 404. Nunca enviar a chave ao navegador nem expor lista de modelos.
-    const configuredModel = String(env.GEMINI_MODEL || "").replace("models/", "").trim();
-    const preferred = !configuredModel || ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"].includes(configuredModel) ? "gemini-3.5-flash-lite" : configuredModel;
-    const payload = JSON.stringify({ ...(mode === "lesson" ? { tools: [{ googleSearch: {} }] } : {}), systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "track" ? 0.3 : mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "track" ? 16000 : mode === "lesson" ? 6500 : mode === "assessment" ? 3500 : 1400, ...(["track","assessment"].includes(mode) ? { responseMimeType: "application/json" } : {}) } });
+    // A API de chat completions da Groq mantém o contrato interno {text,sources,mode,remainingToday}.
+    const model = String(env.GROQ_MODEL || "llama-3.3-70b-versatile").trim();
+    const payload = JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: instructions[mode] },
+        { role: "user", content: prompt }
+      ],
+      temperature: mode === "track" ? 0.3 : mode === "grade" ? 0.2 : 0.6,
+      max_completion_tokens: mode === "track" ? 12000 : mode === "lesson" ? 6500 : mode === "assessment" ? 3500 : 1400,
+      ...(["track", "assessment"].includes(mode) ? { response_format: { type: "json_object" } } : {})
+    });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ["track","lesson","assessment"].includes(mode) ? 55000 : 25000);
     let response;
     try {
-      const invoke = model => fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
+      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+        headers: { "content-type": "application/json", authorization: "Bearer " + env.GROQ_API_KEY },
         body: payload,
         signal: controller.signal
       });
-      response = await invoke(preferred);
-      if ([404, 429, 503].includes(response.status)) {
-        // Em caso de modelo indisponível, cota ou sobrecarga, consultar
-        // alternativas habilitadas para esta chave e tentar no máximo duas.
-        const listing = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=100", {
-          headers: { "x-goog-api-key": env.GEMINI_API_KEY }, signal: controller.signal
-        });
-        if (listing.ok) {
-          const available = await listing.json();
-          const models = (available.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent")).map(m => String(m.name || "").replace("models/", ""));
-          const priority = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash"];
-          const candidates = [...priority.filter(m => models.includes(m)), ...models.filter(m => m.startsWith("gemini-3") && m.includes("flash"))].filter((m, i, all) => m !== preferred && all.indexOf(m) === i).slice(0, 2);
-          for (const candidate of candidates) {
-            console.log("Gemini model fallback", candidate);
-            response = await invoke(candidate);
-            if (response.ok || ![404, 429, 503].includes(response.status)) break;
-          }
-        } else {
-          console.error("Gemini model discovery status", listing.status);
-        }
-      }
     } catch (error) {
-      return json({ error: "Não foi possível conectar ao Gemini. Tente novamente." }, 502);
+      return json({ error: "Não foi possível conectar à GroqCloud. Tente novamente." }, 502);
     } finally { clearTimeout(timeout); }
     if (!response.ok) {
-      // Diagnóstico limitado a campos não sensíveis. Nunca retornar headers, chave ou corpo bruto.
       let providerCode = "", providerMessage = "";
       try {
         const failure = await response.json();
-        providerCode = String(failure?.error?.status || "").slice(0, 60);
+        providerCode = String(failure?.error?.code || failure?.error?.type || "").slice(0, 60);
         providerMessage = String(failure?.error?.message || "").slice(0, 500);
       } catch (_) {}
-      console.error("Gemini upstream", response.status, providerCode, providerMessage);
+      console.error("Groq upstream", response.status, providerCode, providerMessage);
       const hints = {
-        400: "O Gemini rejeitou a solicitação.",
-        401: "A chave Gemini não foi aceita. Confira o segredo GEMINI_API_KEY no Cloudflare.",
-        403: "A chave Gemini não tem permissão para usar esta API. Confira o Google AI Studio.",
-        404: "O modelo Gemini não foi encontrado para esta versão da API.",
-        429: "O Gemini atingiu o limite de uso ou de cota.",
-        500: "O Gemini apresentou um erro temporário.",
-        503: "O Gemini está temporariamente indisponível."
+        400: "A GroqCloud rejeitou a solicitação ou o modelo configurado.",
+        401: "A chave GroqCloud não foi aceita. Confira GROQ_API_KEY no Cloudflare.",
+        403: "A chave GroqCloud não tem permissão para esta operação.",
+        404: "O modelo GroqCloud não foi encontrado.",
+        413: "A solicitação excede o tamanho permitido pelo modelo.",
+        429: "A GroqCloud atingiu o limite de solicitações ou de tokens.",
+        500: "A GroqCloud apresentou um erro temporário.",
+        503: "A GroqCloud está temporariamente indisponível."
       };
-      // Retornar só informações de diagnóstico específicas e sanitizadas.
-      const safeDetail = providerMessage.replace(/AIza[0-9A-Za-z_-]+/g, "[chave oculta]").replace(/https?:[^ ]+/g, "[URL oculta]");
-      return json({ error: (hints[response.status] || "Falha na comunicação com o Gemini.") + " HTTP " + response.status + (providerCode ? " (" + providerCode + ")" : "") + (safeDetail ? " — " + safeDetail : ""), providerStatus: response.status, providerCode }, response.status === 429 ? 429 : 502);
+      // Não revelar conteúdo bruto do provedor ou informações sensíveis ao navegador.
+      const safeDetail = providerMessage.replace(/gsk_[0-9A-Za-z_-]+/g, "[chave oculta]").replace(/https?:[^ ]+/g, "[URL oculta]");
+      return json({ error: (hints[response.status] || "Falha na comunicação com a GroqCloud.") + " HTTP " + response.status + (providerCode ? " (" + providerCode + ")" : "") + (safeDetail ? " — " + safeDetail : ""), providerStatus: response.status, providerCode }, response.status === 429 ? 429 : 502);
     }
-    const data = await response.json();
-    const text = (data.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("\\n").trim();
-    if (!text) return json({ error: "O Gemini não retornou conteúdo para esta solicitação." }, 502);
-    const grounding = mode === "lesson" ? (data.candidates?.[0]?.groundingMetadata?.groundingChunks || []).filter(c => c.web?.uri && /^https:\/\//i.test(c.web.uri)).slice(0, 8).map(c => ({ title: String(c.web.title || "Fonte consultada").slice(0, 180), url: c.web.uri })) : [];
-    return json({ text: text.slice(0, mode === "track" ? 60000 : 22000), sources: grounding, mode, remainingToday: Math.max(0, 30 - Number(quota.record_json)) });
+    let data;
+    try { data = await response.json(); } catch (_) { return json({ error: "A GroqCloud retornou uma resposta inválida." }, 502); }
+    const text = String(data.choices?.[0]?.message?.content || "").trim();
+    if (!text) return json({ error: "A GroqCloud não retornou conteúdo para esta solicitação." }, 502);
+    // Sem ferramenta de pesquisa integrada, não apresentar referências não verificadas.
+    return json({ text: text.slice(0, mode === "track" ? 60000 : 22000), sources: [], mode, remainingToday: Math.max(0, 30 - Number(quota.record_json)) });
   }
 
   if (path === "/api/study-profile" && request.method === "GET") {
