@@ -77,7 +77,7 @@ async function currentUser(request, env) {
   if (!token) return null;
   const tokenHash = await sha256(token);
   return env.DB.prepare(
-    "SELECT u.id, u.username, u.display_name, u.area, u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > unixepoch() AND u.status='active'"
+    "SELECT u.id, u.username, u.display_name, u.area, u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > unixepoch() AND u.status='active' AND (u.role!='admin' OR NOT EXISTS(SELECT 1 FROM temporary_admins t WHERE t.user_id=u.id) OR EXISTS(SELECT 1 FROM temporary_admins t WHERE t.user_id=u.id AND t.expires_at>unixepoch() AND t.revoked_at IS NULL))"
   ).bind(tokenHash).first();
 }
 
@@ -92,6 +92,11 @@ async function adminUser(request, env) {
  const row=await env.DB.prepare("SELECT role,status FROM users WHERE id=?").bind(auth.user.id).first();
  if(!row||row.role!=="admin"||row.status!=="active")return {response:json({error:"Acesso restrito à conta administradora."},403)};
  return {user:auth.user};
+}
+async function permanentAdmin(request,env){
+ const a=await adminUser(request,env);if(a.response)return a;
+ const temporary=await env.DB.prepare("SELECT 1 FROM temporary_admins WHERE user_id=?").bind(a.user.id).first();
+ return temporary?{response:json({error:"Apenas o administrador permanente pode gerenciar acessos temporários."},403)}:a;
 }
 function inviteCode(){return "DHL-"+randomToken(9).replace(/[-_]/g,"").toUpperCase();}
 
@@ -212,6 +217,8 @@ async function handleApi(request, env) {
       return json({ error: "Usuário ou senha inválidos." }, 401);
     }
     if(user.status!=="active")return json({error:"Esta conta está suspensa ou revogada."},403);
+    const temp=await env.DB.prepare("SELECT expires_at,revoked_at FROM temporary_admins WHERE user_id=?").bind(user.id).first();
+    if(temp&&(temp.revoked_at!==null||temp.expires_at<=Math.floor(Date.now()/1000)))return json({error:"Este acesso administrativo temporário expirou ou foi revogado."},403);
     const computed = await passwordHash(password, user.password_salt);
     if (computed.hash !== user.password_hash) return json({ error: "Usuário ou senha inválidos." }, 401);
     const token = randomToken();
@@ -247,6 +254,32 @@ async function handleApi(request, env) {
   }
 
 
+  if(path==="/api/admin/temporary-admins"&&request.method==="GET"){
+    const a=await permanentAdmin(request,env);if(a.response)return a.response;
+    const rows=await env.DB.prepare("SELECT t.user_id,u.username,u.display_name,t.expires_at,t.revoked_at,t.created_at FROM temporary_admins t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
+    return json({accounts:rows.results||[]});
+  }
+  if(path==="/api/admin/temporary-admins"&&request.method==="POST"){
+    const a=await permanentAdmin(request,env);if(a.response)return a.response;
+    const b=await readJson(request),username=String(b?.username||"").trim().toLowerCase(),displayName=String(b?.displayName||"").trim(),password=String(b?.password||"");
+    const hours=Number(b?.hours);
+    if(!/^[a-z0-9_-]{3,32}$/.test(username)||!displayName||displayName.length>100||password.length<12||password.length>128||!Number.isInteger(hours)||hours<1||hours>168)return json({error:"Informe usuário válido, nome, senha com 12 a 128 caracteres e validade entre 1 e 168 horas."},400);
+    const id=crypto.randomUUID(),{salt,hash}=await passwordHash(password),expiresAt=Math.floor(Date.now()/1000)+hours*3600;
+    try{
+      await env.DB.batch([
+        env.DB.prepare("INSERT INTO users(id,username,display_name,area,password_salt,password_hash,created_at,role,status) VALUES(?,?,?,'programacao',?,?,unixepoch(),'admin','active')").bind(id,username,displayName,salt,hash),
+        env.DB.prepare("INSERT INTO temporary_admins(user_id,created_by,created_at,expires_at) VALUES(?,?,unixepoch(),?)").bind(id,a.user.id,expiresAt)
+      ]);
+    }catch(e){if(/UNIQUE/i.test(String(e)))return json({error:"Nome de usuário já utilizado."},409);throw e;}
+    return json({ok:true,account:{id,username,displayName,expiresAt}},201);
+  }
+  if(path.startsWith("/api/admin/temporary-admins/")&&request.method==="DELETE"){
+    const a=await permanentAdmin(request,env);if(a.response)return a.response;
+    const id=path.slice("/api/admin/temporary-admins/".length).replace(/\\/+$/,"");
+    const found=await env.DB.prepare("SELECT user_id FROM temporary_admins WHERE user_id=?").bind(id).first();if(!found)return json({error:"Acesso temporário não encontrado."},404);
+    await env.DB.batch([env.DB.prepare("UPDATE temporary_admins SET revoked_at=unixepoch() WHERE user_id=?").bind(id),env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(id)]);
+    return json({ok:true});
+  }
   if(path==="/api/admin/invites"&&request.method==="GET"){const a=await adminUser(request,env);if(a.response)return a.response;const r=await env.DB.prepare("SELECT id,code_hint,max_uses,used_count,created_at,expires_at,revoked_at FROM invites ORDER BY created_at DESC LIMIT 200").all();return json({invites:r.results||[]});}
   if(path==="/api/admin/invites"&&request.method==="POST"){const a=await adminUser(request,env);if(a.response)return a.response;const b=await readJson(request),type=b?.type==="single"?"single":b?.type==="multiple"?"multiple":"",max=type==="single"?1:Number(b?.maxUses);if(!type||!Number.isInteger(max)||max<1||max>10000)return json({error:"Escolha uso único ou limite entre 1 e 10000."},400);const code=inviteCode(),id=crypto.randomUUID();await env.DB.prepare("INSERT INTO invites (id,code_hash,code_hint,max_uses,used_count,created_by,created_at) VALUES (?,?,?,?,0,?,unixepoch())").bind(id,await sha256(code),code.slice(-4),max,a.user.id).run();return json({ok:true,invite:{id,code,maxUses:max,usedCount:0}},201);}
   if(path.startsWith("/api/admin/invites/")&&request.method==="DELETE"){const a=await adminUser(request,env);if(a.response)return a.response;const id=path.slice("/api/admin/invites/".length).replace(/\/+$/,"");if(!id)return json({error:"ID do convite ausente."},400);const before=await env.DB.prepare("SELECT id FROM invites WHERE id=?").bind(id).first();if(!before)return json({error:"Convite não encontrado ou já apagado."},404);await env.DB.prepare("DELETE FROM invites WHERE id=?").bind(id).run();const still=await env.DB.prepare("SELECT id FROM invites WHERE id=?").bind(id).first();if(still)return json({error:"O banco não confirmou a exclusão do convite."},500);return json({ok:true,deleted:true});}
