@@ -520,6 +520,22 @@ html[data-dhark-auth="app"] #caderno.page.active>.notebook-top:after{
 #tutor .dhark-ai-saved h3{flex:0 0 100%;margin:0}
 #tutor [hidden]{display:none!important}
 </style>
+<style id="dhark-simple-notebook-style">
+.simple-notebook{background:var(--card,#fff);border:1px solid var(--border,#e6dfee);border-radius:22px;overflow:hidden;margin-top:18px}
+.simple-notebook-bar{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border,#e6dfee);flex-wrap:wrap}
+.simple-notebook-tabs{display:flex;flex:1;gap:8px;flex-wrap:wrap}
+.simple-notebook-tabs button{border:1px solid var(--border,#e6dfee);background:var(--accent-soft,#f6f1fa);color:var(--ink);border-radius:12px;padding:10px 16px;font-weight:700}
+.simple-notebook-tabs button.active{background:var(--green);color:white;border-color:var(--green)}
+.simple-notebook-writing{padding:clamp(16px,3vw,32px)}
+.simple-notebook-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#notebook-current-name{font-size:clamp(19px,3vw,27px);font-weight:800;border:0;background:transparent;color:var(--ink);padding:6px 0;flex:1;min-width:160px}
+#note-save-status{font-size:12px;color:var(--muted,#746883)}
+.simple-notebook-textarea{display:block;width:100%;min-height:60vh;resize:vertical;border:1px solid var(--border,#e6dfee);border-radius:14px;padding:22px;line-height:1.9;font-size:16px;color:var(--ink);background:var(--accent-soft,#faf8fc);box-sizing:border-box}
+.simple-notebook-footer{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-top:14px;font-size:12px;color:var(--muted,#746883)}
+.simple-notebook-footer span{margin-right:auto}
+#caderno .simple-notebook-textarea:disabled{opacity:.6}
+@media(max-width:600px){.simple-notebook-writing{padding:12px}.simple-notebook-textarea{min-height:55vh;padding:14px}.simple-notebook-bar{align-items:stretch}}
+</style>
 <style id="auth-gate-style">
 .app{display:none!important}
 #auth-gate{min-height:100vh;display:none;place-items:center;padding:24px;background:radial-gradient(ellipse at top,#eadcf8 0%,#f7f4fb 55%,#eee8f5 100%);font-family:Inter,system-ui,-apple-system,sans-serif;color:#241631}
@@ -627,18 +643,10 @@ html[data-dhark-auth="app"] #caderno.page.active>.notebook-top:after{
 </section>
 
 <section class="page" id="caderno">
-<div class="notebook-top"><div class="notebook-top-icon" aria-hidden="true">✎</div><div class="notebook-top-copy"><span class="studio-index">DHARK / CADERNO</span><h2>Meu caderno</h2><p>Um lugar para pensar, escrever e guardar o que você aprende.</p></div></div>
-<div class="notebook-workspace">
- <aside class="notebook-shelf">
-  <div class="notebook-shelf-head"><span class="notebook-mini-label">BIBLIOTECA PESSOAL</span><h3>Seus cadernos</h3><p>Organize cada assunto em seu próprio espaço.</p></div>
-  <div class="notebook-shelf-content"><div class="field"><label for="notebook-name">Nome do novo caderno</label><input id="notebook-name" placeholder="Ex.: HTML, CSS, JavaScript"></div><button class="btn notebook-create" onclick="createNotebook()">+ Criar caderno</button><div class="notebook-divider"><span>CADERNOS SALVOS</span></div><div id="notebook-list" class="lesson-list"></div></div>
- </aside>
- <div class="notebook-editor">
-  <div class="notebook-editor-toolbar"><div><span class="notebook-mini-label">PÁGINA DE ESTUDO</span><h3 id="note-editor-title">Nova anotação</h3></div><span class="tag" id="note-save-status">Salvo localmente</span></div>
-  <div class="notebook-paper"><div class="field notebook-title-field"><label for="note-title">Título da anotação</label><input id="note-title" placeholder="Dê um título para sua página"></div><div class="field notebook-body-field"><label for="note-body">Suas ideias e aprendizados</label><textarea id="note-body" rows="12" placeholder="Escreva aqui suas explicações, exemplos de código, dúvidas e resumos..."></textarea></div></div>
-  <div class="notebook-editor-actions"><button class="btn" onclick="saveNote()">Salvar anotação</button><button class="btn ghost" onclick="newNote()">Nova anotação</button><button class="btn ghost" onclick="exportNotebooks()">Exportar cadernos</button></div>
-  <div class="notebook-notes"><div class="notebook-notes-heading"><span class="notebook-mini-label">ARQUIVO</span><h3>Anotações deste caderno</h3></div><div id="notes-list" class="lesson-list"></div></div>
- </div>
+<div class="notebook-top"><div class="notebook-top-icon" aria-hidden="true">✎</div><div class="notebook-top-copy"><span class="studio-index">DHARK / CADERNO</span><h2>Meus cadernos</h2><p>Escolha um caderno e escreva à vontade. Tudo é salvo automaticamente na sua conta.</p></div></div>
+<div class="simple-notebook">
+ <div class="simple-notebook-bar"><div id="notebook-list" class="simple-notebook-tabs" aria-label="Meus cadernos"></div><button type="button" class="btn notebook-create" onclick="createNotebook()">+ Novo caderno</button></div>
+ <div class="simple-notebook-writing"><div class="simple-notebook-heading"><input id="notebook-current-name" aria-label="Nome do caderno" placeholder="Nome do caderno" maxlength="100" onchange="renameCurrentNotebook(this.value)"><span id="note-save-status" role="status">Pronto para escrever</span></div><textarea id="note-body" class="simple-notebook-textarea" aria-label="Texto do caderno" placeholder="Comece a escrever aqui. Seu texto continua sempre neste caderno…" spellcheck="true" oninput="dharkNotebookTyping(this.value)"></textarea><div class="simple-notebook-footer"><span>Escreva sem limites de páginas ou anotações.</span><button type="button" class="btn ghost small" onclick="exportNotebooks()">Exportar</button><button type="button" class="btn ghost small" onclick="deleteCurrentNotebook()">Excluir caderno</button></div></div>
 </div>
 </section>
 <section class="page" id="pratica">
@@ -664,24 +672,17 @@ ORDER BY ano DESC;</code></pre></details></div>
 </section>
 
 <section class="page" id="tutor">
-<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">✳</span><div><span class="dhark-section-kicker">DHARK / INTELIGÊNCIA ARTIFICIAL</span><h2>Seu espaço de aprendizagem</h2><p>Tire dúvidas, crie aulas e revise suas respostas com o Gemini.</p></div></div>
+<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">✳</span><div><span class="dhark-section-kicker">DHARK / INTELIGÊNCIA ARTIFICIAL</span><h2>Seu espaço de aprendizagem</h2><p>Pergunte o que quiser ao seu tutor com IA.</p></div></div>
 <div class="card dhark-ai-panel">
  <div class="eyebrow">APRENDER COM IA</div><h2>Estude o que você quiser</h2>
  <p class="muted">O Gemini pode cometer erros. Confira informações importantes e não compartilhe dados pessoais sensíveis.</p>
- <div class="dhark-ai-modes" role="group" aria-label="Modo de estudo">
- <button type="button" class="btn dhark-ai-mode active" data-ai-mode="tutor" onclick="dharkSetAiMode('tutor')">✳ Tirar dúvidas</button>
- <button type="button" class="btn ghost dhark-ai-mode" data-ai-mode="lesson" onclick="dharkSetAiMode('lesson')">▤ Criar aula</button>
- <button type="button" class="btn ghost dhark-ai-mode" data-ai-mode="grade" onclick="dharkSetAiMode('grade')">✓ Corrigir resposta</button>
- </div>
  <div class="field"><label for="ai-topic">Assunto (qualquer área de estudo)</label><input id="ai-topic" maxlength="180" placeholder="Ex.: programação, matemática, inglês, biologia..."></div>
  <div class="field"><label for="ai-level">Seu nível</label><select id="ai-level"><option value="iniciante">Iniciante</option><option value="intermediário">Intermediário</option><option value="avançado">Avançado</option></select></div>
  <div class="field"><label for="ai-question" id="ai-question-label">Qual é sua dúvida?</label><textarea id="ai-question" rows="4" maxlength="5000" placeholder="Escreva o que você quer entender..."></textarea></div>
- <div class="field" id="ai-context-wrap" hidden><label for="ai-context">Contexto ou critérios de correção (opcional)</label><textarea id="ai-context" rows="3" maxlength="3500" placeholder="Enunciado completo, critérios, material de referência..."></textarea></div>
- <div class="field" id="ai-answer-wrap" hidden><label for="ai-answer">Sua resposta</label><textarea id="ai-answer" rows="5" maxlength="3500" placeholder="Digite sua resposta para receber feedback..."></textarea></div>
  <button class="btn" id="ai-submit" type="button" onclick="dharkAskAi()">Perguntar ao tutor →</button>
  <p class="muted" id="ai-status" role="status" aria-live="polite">As respostas exigem conexão com o Gemini e uma conta autenticada.</p>
- <div class="dhark-ai-output" id="ai-output" aria-live="polite" hidden><h3 id="ai-output-title">Resposta da IA</h3><pre id="ai-output-text"></pre><div class="dhark-ai-actions"><button class="btn ghost" type="button" onclick="dharkCopyAi()">Copiar resultado</button><button class="btn ghost" id="ai-save-lesson" type="button" onclick="dharkSaveAiLesson()" hidden>Salvar aula na minha conta</button></div></div>
- <div id="ai-saved-lessons" class="dhark-ai-saved"></div>
+ <div class="dhark-ai-output" id="ai-output" aria-live="polite" hidden><h3 id="ai-output-title">Resposta da IA</h3><pre id="ai-output-text"></pre><div class="dhark-ai-actions"><button class="btn ghost" type="button" onclick="dharkCopyAi()">Copiar resultado</button></div></div>
+
 </div>
 </section>
 
