@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1e3a8a">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
@@ -1701,6 +1701,27 @@ document.getElementById('dhark-profile-name')?.addEventListener('input',dharkUpd
  body .app>.side{width:62px!important;min-width:62px!important;max-width:62px!important;padding:12px 3px!important}
  body .app>.main{padding:16px 9px 30px!important}
  body #dhark-more-menu{left:66px!important;max-width:calc(100vw - 72px)!important}
+}
+</style>
+<style id="dhark-mobile-rail-transform-fix">
+@media(max-width:900px){
+ html{touch-action:pan-x pan-y}
+ body .app>.side{
+  transform:none!important;translate:none!important;scale:1!important;
+  inset:0 auto 0 0!important;left:0!important;right:auto!important;
+  margin:0!important;box-sizing:border-box!important;
+  border-left:0!important;border-top:0!important;border-bottom:0!important;
+  border-radius:0!important;max-height:none!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important
+ }
+ body .app>.side .nav,body .app>.side .nav button,body .app>.side #dhark-more-toggle{
+  transform:none!important;translate:none!important;box-sizing:border-box!important
+ }
+ body .app>.side .nav button.active{box-shadow:none!important}
+ body .app>.side .nav button .nav-glyph{margin:0 auto!important}
+ body .app>.side .nav button span:last-child{padding:0 1px!important}
+ body .app>.side .nav button[data-page="inicio"],body .app>.side .nav button[data-page="trilha"],body .app>.side .nav button[data-page="pratica"],body .app>.side .nav button[data-page="tutor"],body .app>.side .nav button[data-page="perfil"]{position:relative!important;left:auto!important;right:auto!important}
 }
 </style>
 <script id="dhark-auth-gate-script">
