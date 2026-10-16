@@ -276,7 +276,7 @@ async function handleApi(request, env) {
   }
   if(path.startsWith("/api/admin/temporary-admins/")&&request.method==="DELETE"){
     const a=await permanentAdmin(request,env);if(a.response)return a.response;
-    const id=path.slice("/api/admin/temporary-admins/".length).replace(/\\/+$/,"");
+    const id=path.slice("/api/admin/temporary-admins/".length).replace(/\/+$/,"");
     const found=await env.DB.prepare("SELECT user_id FROM temporary_admins WHERE user_id=?").bind(id).first();if(!found)return json({error:"Acesso temporário não encontrado."},404);
     await env.DB.batch([env.DB.prepare("UPDATE temporary_admins SET revoked_at=unixepoch() WHERE user_id=?").bind(id),env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(id)]);
     return json({ok:true});
