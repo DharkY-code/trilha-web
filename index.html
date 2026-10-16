@@ -658,8 +658,8 @@ body.dhark-personal-account .side-note{display:none}
  <div class="simple-notebook-writing"><div class="simple-notebook-heading"><input id="notebook-current-name" aria-label="Nome do caderno" placeholder="Nome do caderno" maxlength="100" onchange="renameCurrentNotebook(this.value)"><span id="note-save-status" role="status">Pronto para escrever</span></div><textarea id="note-body" class="simple-notebook-textarea" aria-label="Texto do caderno" placeholder="Comece a escrever aqui. Seu texto continua sempre neste caderno…" spellcheck="true" oninput="dharkNotebookTyping(this.value)"></textarea><div class="simple-notebook-footer"><span>Escreva sem limites de páginas ou anotações.</span><button type="button" class="btn ghost small" onclick="exportNotebooks()">Exportar</button><button type="button" class="btn ghost small" onclick="deleteCurrentNotebook()">Excluir caderno</button></div></div>
 </div>
 </section>
-<section class="page" id="personal-practice"><div class="card"><h2>Prática personalizada</h2><p>Pratique com atividades das aulas da sua trilha.</p><div id="personal-practice-list"></div></div></section>
-<section class="page" id="personal-exam"><div class="card"><h2>Prova da minha trilha</h2><p>Responda às questões de revisão das aulas estudadas. A correção é feita pelo tutor de IA.</p><div id="personal-exam-list"></div><button class="btn" onclick="dharkGradePersonalExam()">Corrigir minha prova com IA</button><div id="personal-exam-feedback" role="status"></div></div></section>
+<section class="page" id="personal-practice"><div class="card"><h2>Prática personalizada</h2><p>Pratique com atividades das aulas da sua trilha.</p><button type="button" class="btn ghost small" onclick="dharkGenerateAssessment('practice')">Gerar nova prática inédita</button><div id="personal-practice-list"></div></div></section>
+<section class="page" id="personal-exam"><div class="card"><h2>Prova da minha trilha</h2><p>Responda às questões de revisão das aulas estudadas. A correção é feita pelo tutor de IA.</p><button type="button" class="btn ghost small" onclick="dharkGenerateAssessment('exam')">Gerar nova prova inédita</button><div id="personal-exam-list"></div><button class="btn" onclick="dharkGradePersonalExam()">Corrigir minha prova com IA</button><div id="personal-exam-feedback" role="status"></div></div></section>
 <section class="page" id="pratica">
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">⌘</span><div><span class="dhark-section-kicker">DHARK / PRATICA</span><h2>Estúdio de prática</h2><p>Aprenda construindo e experimentando.</p></div></div>
 <div class="card"><div class="eyebrow">Laboratório de prática</div><h2>Problemas para resolver</h2><p class="muted">Tente antes de consultar uma solução. Escreva seu raciocínio e confira os critérios de correção.</p></div>
@@ -1088,6 +1088,7 @@ async function dharkSetupPersonalStudy(user){
  dharkPersonalDone=Array.isArray(records['ai.personal.done'])?records['ai.personal.done']:[];
  dharkPersonalAnswers=records['ai.personal.answers']||{};
  dharkPersonalTests=records['ai.personal.tests']||[];
+ dharkAssessmentSets={practice:records['ai.personal.assessment.practice']||null,exam:records['ai.personal.assessment.exam']||null};
  dharkRenderPersonalTrack();
  if(!dharkPersonalTrack)void dharkGeneratePersonalTrack(true);
  else if(dharkPersonalProfile.level==='curso_completo'&&dharkPersonalTrack.modules.length<12&&dharkPersonalTrack.subject&&dharkPersonalTrack.subject.toLocaleLowerCase('pt-BR')===String(dharkPersonalProfile.area||'').toLocaleLowerCase('pt-BR'))void dharkGeneratePersonalTrack(true);
@@ -1168,15 +1169,39 @@ function dharkRenderPersonalTrack(){
 }
 
 // Atividades e provas são derivadas exclusivamente das aulas desta conta.
-function dharkPersonalQuestions(){
- if(!dharkPersonalTrack)return[];
- return dharkPersonalTrack.modules.flatMap((m,mi)=>m.lessons.map((l,li)=>({id:mi+'-'+li,title:l.title,exercise:l.exercise||'Explique o principal conceito desta aula.',content:l.content}))).filter(x=>x.exercise);
+let dharkAssessmentSets={practice:null,exam:null},dharkAssessmentBusy=false;
+function dharkPersonalQuestions(kind='practice'){return Array.isArray(dharkAssessmentSets[kind]?.questions)?dharkAssessmentSets[kind].questions:[]}
+async function dharkGenerateAssessment(kind){
+ if(dharkAssessmentBusy||!dharkPersonalTrack)return;
+ dharkAssessmentBusy=true;
+ const target=document.getElementById(kind==='practice'?'personal-practice-list':'personal-exam-list');target.textContent='Criando questões inéditas com IA…';
+ try{
+  const titles=dharkPersonalTrack.modules.flatMap(m=>m.lessons.map(l=>m.title+' — '+l.title)).slice(0,35);
+  const modeLabel=kind==='practice'?'PRÁTICA com dicas':'PROVA SEMANAL sem dicas';
+  const r=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'assessment',topic:dharkPersonalProfile.area,level:dharkPersonalProfile.level,question:'Crie 5 questões inéditas para '+modeLabel+' sobre os temas estudados: '+titles.join('; ').slice(0,2600),context:'Objetivos: '+dharkPersonalProfile.goal.slice(0,650)+'; não reutilize exercícios das aulas. Tipo: '+modeLabel})});
+  const data=await r.json();if(!r.ok)throw Error(data.error||'Não foi possível criar questões');
+  const parsed=JSON.parse(String(data.text||'').trim());
+  if(!Array.isArray(parsed.questions)||parsed.questions.length<3)throw Error('A IA retornou poucas questões. Tente novamente.');
+  const set={date:new Date().toISOString(),subject:dharkPersonalProfile.area,questions:parsed.questions.slice(0,8).map((q,i)=>({id:kind+'-'+Date.now()+'-'+i,title:String(q.title||'Questão '+(i+1)).slice(0,140),question:String(q.question||'').slice(0,1600),hint:kind==='practice'?String(q.hint||'').slice(0,700):'',reference:String(q.reference||'').slice(0,1600)})).filter(q=>q.question)};
+  if(set.questions.length<3)throw Error('As questões geradas estão incompletas.');
+  await dharkPersist('ai.personal.assessment.'+kind,set);dharkAssessmentSets[kind]=set;dharkRenderPersonalAssessments();
+ }catch(e){target.textContent='Não foi possível gerar questões inéditas: '+e.message}finally{dharkAssessmentBusy=false}
 }
 function dharkRenderPersonalAssessments(){
- const questions=dharkPersonalQuestions();
- const practice=document.getElementById('personal-practice-list'),exam=document.getElementById('personal-exam-list');
- if(practice){practice.replaceChildren();questions.forEach(q=>{const card=document.createElement('div');card.className='personal-module';card.style.padding='18px';const title=document.createElement('h3');title.textContent=q.title;card.appendChild(title);const prompt=document.createElement('p');prompt.textContent=q.exercise;card.appendChild(prompt);const area=document.createElement('textarea');area.className='personal-answer';area.placeholder='Escreva sua resposta aqui…';area.value=dharkPersonalAnswers[q.id]||'';area.oninput=()=>dharkSavePersonalAnswer(q.id,area.value);card.appendChild(area);const button=document.createElement('button');button.className='btn ghost small';button.textContent='Receber orientação da IA';const feedback=document.createElement('div');feedback.setAttribute('role','status');button.onclick=()=>dharkEvaluatePersonal(q,area.value,feedback,button);card.append(button,feedback);practice.appendChild(card)})}
- if(exam){exam.replaceChildren();const selected=questions.filter(q=>dharkPersonalDone.includes(q.id)).slice(-10);const examQuestions=selected.length?selected:questions.slice(0,5);examQuestions.forEach((q,i)=>{const card=document.createElement('div');card.className='personal-module';card.style.padding='18px';const label=document.createElement('label');label.textContent=(i+1)+'. '+q.exercise;card.appendChild(label);const area=document.createElement('textarea');area.className='personal-answer';area.dataset.examId=q.id;area.placeholder='Sua resposta';card.appendChild(area);exam.appendChild(card)});if(!examQuestions.length)exam.textContent='Gere sua trilha para começar a prova.'}
+ for(const kind of ['practice','exam']){
+  const target=document.getElementById(kind==='practice'?'personal-practice-list':'personal-exam-list');if(!target)continue;target.replaceChildren();
+  const questions=dharkPersonalQuestions(kind);
+  if(!questions.length){const p=document.createElement('p');p.textContent='As questões desta área serão criadas especialmente para você, sem copiar as atividades das aulas.';target.appendChild(p);continue}
+  questions.forEach((q,i)=>{
+   const card=document.createElement('div');card.className='personal-module';card.style.padding='18px';
+   const heading=document.createElement('h3');heading.textContent=(i+1)+'. '+q.title;card.appendChild(heading);
+   const question=document.createElement('p');question.textContent=q.question;card.appendChild(question);
+   if(kind==='practice'&&q.hint){const details=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Ver dica';details.appendChild(summary);const p=document.createElement('p');p.textContent=q.hint;details.appendChild(p);card.appendChild(details)}
+   const area=document.createElement('textarea');area.className='personal-answer';area.placeholder='Escreva sua resposta…';area.value=kind==='practice'?(dharkPersonalAnswers[q.id]||''):'';if(kind==='exam')area.dataset.examId=q.id;else area.oninput=()=>dharkSavePersonalAnswer(q.id,area.value);card.appendChild(area);
+   if(kind==='practice'){const button=document.createElement('button');button.className='btn ghost small';button.type='button';button.textContent='Pedir ajuda e correção da IA';const feedback=document.createElement('div');feedback.setAttribute('role','status');button.onclick=()=>dharkEvaluatePersonal({...q,exercise:q.question,content:q.reference},area.value,feedback,button);card.append(button,feedback)}
+   target.appendChild(card);
+  })
+ }
 }
 let dharkAnswerSaveTimer;
 function dharkSavePersonalAnswer(id,value){dharkPersonalAnswers[id]=value;clearTimeout(dharkAnswerSaveTimer);dharkAnswerSaveTimer=setTimeout(()=>void dharkPersist('ai.personal.answers',dharkPersonalAnswers),1000)}
@@ -1186,10 +1211,10 @@ async function dharkEvaluatePersonal(q,answer,feedback,button){
  try{const r=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'grade',topic:dharkPersonalProfile?.goal||'Estudos',level:dharkPersonalProfile?.level||'basico',question:q.exercise,context:q.content.slice(0,3500),answer:answer.slice(0,4000)})});const d=await r.json();if(!r.ok)throw Error(d.error||'Não foi possível avaliar');feedback.textContent=d.text}catch(e){feedback.textContent='Correção indisponível: '+e.message}finally{button.disabled=false}
 }
 async function dharkGradePersonalExam(){
- const container=document.getElementById('personal-exam-list'),feedback=document.getElementById('personal-exam-feedback'),areas=[...container.querySelectorAll('textarea[data-exam-id]')],questions=dharkPersonalQuestions();
+ const container=document.getElementById('personal-exam-list'),feedback=document.getElementById('personal-exam-feedback'),areas=[...container.querySelectorAll('textarea[data-exam-id]')],questions=dharkPersonalQuestions('exam');
  if(!areas.length||areas.some(a=>!a.value.trim())){feedback.textContent='Responda a todas as questões antes de corrigir.';return}
  feedback.textContent='Avaliando sua prova com IA…';const results=[];
- for(const area of areas){const q=questions.find(q=>q.id===area.dataset.examId);if(!q)continue;try{const r=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'grade',topic:dharkPersonalProfile?.goal||'Estudos',level:dharkPersonalProfile?.level||'basico',question:q.exercise,context:q.content.slice(0,3000),answer:area.value.slice(0,3500)})});const d=await r.json();if(!r.ok)throw Error(d.error||'Falha na avaliação');results.push({question:q.title,feedback:d.text})}catch(e){feedback.textContent='A avaliação foi interrompida: '+e.message;return}}
+ for(const area of areas){const q=questions.find(q=>q.id===area.dataset.examId);if(!q)continue;try{const r=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'grade',topic:dharkPersonalProfile?.goal||'Estudos',level:dharkPersonalProfile?.level||'basico',question:q.question,context:q.reference.slice(0,3000),answer:area.value.slice(0,3500)})});const d=await r.json();if(!r.ok)throw Error(d.error||'Falha na avaliação');results.push({question:q.title,feedback:d.text})}catch(e){feedback.textContent='A avaliação foi interrompida: '+e.message;return}}
  dharkPersonalTests.push({date:new Date().toISOString(),results});await dharkPersist('ai.personal.tests',dharkPersonalTests);feedback.replaceChildren();for(const result of results){const p=document.createElement('p');p.style.whiteSpace='pre-wrap';p.textContent=result.question+'\n'+result.feedback;feedback.appendChild(p)}
 }
 
