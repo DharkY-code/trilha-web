@@ -1175,6 +1175,7 @@ function dharkRenderPersonalTrack(){
     deep.textContent='Mostrar/ocultar aula completa';
    }catch(e){deep.textContent='Tentar carregar aula completa';const warning=document.createElement('p');warning.textContent='Não foi possível preparar a aula: '+e.message;tools.appendChild(warning)}finally{deep.disabled=false}};
    tools.appendChild(deep);
+   details.addEventListener('toggle',()=>{if(details.open&&!l.fullContent&&!deep.disabled)deep.click()});
    const link=document.createElement('a');link.className='btn ghost small';link.target='_blank';link.rel='noopener noreferrer';link.href='https://www.youtube.com/results?search_query='+encodeURIComponent('aula explicativa '+dharkPersonalProfile.area+' '+l.title);link.textContent='▶ Encontrar vídeo sobre esta aula';link.title='Busca externa no YouTube. Nenhum vídeo foi verificado ou incorporado.';tools.appendChild(link);
    details.append(tools,full);
    const button=document.createElement('button');button.className='btn ghost small';button.type='button';button.textContent=dharkPersonalDone.includes(id)?'✓ Concluída':'Marcar como concluída';button.onclick=async()=>{if(!dharkPersonalDone.includes(id)){dharkPersonalDone.push(id);await dharkPersist('ai.personal.done',dharkPersonalDone);dharkRenderPersonalTrack()}};details.appendChild(button);
