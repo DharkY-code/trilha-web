@@ -327,6 +327,26 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 .dhark-dock-arrows button{display:grid;place-items:center;width:34px;height:39px;border-radius:10px;background:#5a3c73;color:white;border:1px solid #ffffff26;font-size:22px;line-height:1}
 .dhark-dock-arrows button:hover{background:#79569a}
 @media(max-width:650px){.dhark-dock-arrows button{width:29px;height:42px;font-size:19px}}
+
+/* Correção de espaços vazios: impedir que linhas implícitas do grid cresçam ou sejam puladas. */
+.main{padding-top:24px}
+.top{margin-bottom:18px;padding-bottom:17px}
+.page.active{align-content:start!important;grid-auto-rows:min-content!important}
+.page.active:not(#inicio):not(#caderno):not(#trilha){grid-auto-flow:row dense!important}
+.page.active:not(#inicio):not(#caderno):not(#trilha)>.dhark-section-banner{grid-column:1/-1!important;grid-row:1!important}
+.page.active:not(#inicio):not(#caderno):not(#trilha)>.dhark-section-banner+.card{grid-row:2!important;align-self:start!important;min-height:0!important}
+.page.active:not(#inicio):not(#caderno):not(#trilha)>.lesson-layout,
+.page.active:not(#inicio):not(#caderno):not(#trilha)>.grid{align-self:start!important}
+#trilha.page.active,#caderno.page.active{align-content:start!important;grid-auto-rows:min-content!important}
+#trilha>.dhark-section-banner,#caderno>.dhark-section-banner{min-height:95px;padding:19px 25px}
+#trilha>.dhark-section-banner+.card,#caderno>.dhark-section-banner+.card{min-height:0!important}
+@media(min-width:951px){
+#aulas>.lesson-layout,#pratica>.grid,#dominios>.resource-grid{grid-row:2!important}
+}
+@media(max-width:950px){
+#aulas>.lesson-layout,#pratica>.grid,#dominios>.resource-grid{grid-row:3!important}
+}
+@media(max-width:650px){.main{padding-top:17px}.top{margin-bottom:14px;padding-bottom:13px}.page.active{row-gap:12px!important}#trilha>.dhark-section-banner,#caderno>.dhark-section-banner{padding:16px}}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
