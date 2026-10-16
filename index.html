@@ -590,17 +590,19 @@ body.dhark-personal-account .side-note{display:none}
 <aside class="side">
   <div class="brand"><div class="brand-mark" role="img" aria-label="Livros da Dhark Library">📚</div> Dhark Library</div>
   <nav class="nav" aria-label="Navegação principal">
-    <button class="active" data-page="inicio">◫ <span>Visão geral</span></button>
-    <button data-page="trilha">▤ <span>Minha trilha</span></button>
-
-    <button data-page="caderno">▤ <span>Meu caderno</span></button>
-    <button data-page="pratica">⌘ <span>Prática</span></button>
-    <button data-page="prova">✓ <span>Prova semanal</span></button>
-    <button data-page="tutor">✳ <span>Tutor de estudo</span></button>
-    <button data-page="dominios">↗ <span>Domínios e hospedagem</span></button>
-    <button data-page="config">⚙ <span>Configurações</span></button>
-    <button data-page="admin" id="admin-nav-button" hidden>🛡️ <span>Administração</span></button>
-    <button type="button" id="logout-nav-button">↪ <span>Sair da conta</span></button>
+    <div class="nav-group-label">APRENDIZAGEM</div>
+    <button class="active" data-page="inicio"><span class="nav-glyph">◫</span><span>Visão geral</span></button>
+    <button data-page="trilha"><span class="nav-glyph">▤</span><span>Minha trilha</span></button>
+    <button data-page="pratica"><span class="nav-glyph">⌘</span><span>Exercícios</span></button>
+    <button data-page="prova"><span class="nav-glyph">✓</span><span>Avaliações</span></button>
+    <div class="nav-group-label">FERRAMENTAS</div>
+    <button data-page="tutor"><span class="nav-glyph">✳</span><span>Tutor com IA</span></button>
+    <button data-page="caderno"><span class="nav-glyph">▤</span><span>Meu caderno</span></button>
+    <button data-page="dominios"><span class="nav-glyph">↗</span><span>Publicação e domínios</span></button>
+    <div class="nav-group-label">SUA CONTA</div>
+    <button data-page="config"><span class="nav-glyph">⚙</span><span>Configurações</span></button>
+    <button data-page="admin" id="admin-nav-button" hidden><span class="nav-glyph">♢</span><span>Administração</span></button>
+    <button type="button" id="logout-nav-button"><span class="nav-glyph">↪</span><span>Sair da conta</span></button>
   </nav>
   <div class="dhark-dock-arrows" aria-label="Rolar abas"><button type="button" onclick="document.querySelector('.nav').scrollBy({left:-300,behavior:'smooth'})" aria-label="Ver abas anteriores">‹</button><button type="button" onclick="document.querySelector('.nav').scrollBy({left:300,behavior:'smooth'})" aria-label="Ver próximas abas">›</button></div>
   <div class="side-note"><strong>Regra da trilha</strong>Avançar depende de demonstrar domínio, não só marcar aulas como concluídas.</div>
@@ -1439,6 +1441,51 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 }
 </script>
 
+<style id="dhark-navigation-refresh">
+/* Navigation groups are presentation only; existing page IDs and actions remain unchanged. */
+.nav-group-label{color:#a8b7cf;font-size:10px;font-weight:850;letter-spacing:.17em;padding:20px 15px 8px;white-space:nowrap;user-select:none}
+.nav-group-label:first-child{padding-top:9px}
+.nav .nav-glyph{display:inline-flex;align-items:center;justify-content:center;width:22px;min-width:22px;font-size:19px;line-height:1}
+.side .brand{font-size:19px;font-weight:850;letter-spacing:-.04em;padding-bottom:18px}
+.side .side-note{border-top:1px solid #ffffff26;margin-top:22px;padding-top:18px;color:#c5d3e7}
+.side .nav button{display:flex;align-items:center;gap:11px;min-height:46px;padding:10px 14px;font-weight:680;transition:background .16s,transform .16s}
+.side .nav button:not(.active):hover{background:#ffffff16;transform:translateX(2px)}
+.side .nav button.active{background:var(--green)!important;color:white!important;box-shadow:0 5px 16px #00000014}
+.main>.top{padding-bottom:24px;margin-bottom:28px}
+.main>.top .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.main>.top h1{font-size:clamp(27px,3vw,41px);line-height:1.16;max-width:900px}
+.main>.top .sub{font-size:14px;line-height:1.6;max-width:700px}
+.main>.top .pill{flex-shrink:0}
+.page.active>.dhark-section-banner{margin-bottom:22px}
+.page .card,.page .pd-study-card,.page .pd-progress-card{transition:border-color .18s,box-shadow .18s}
+.page .card:hover{border-color:#cbd8e8;box-shadow:0 10px 30px #1e3a8a0a}
+.page .field{margin-bottom:18px}
+.page .field label{display:block;margin-bottom:8px;font-weight:720}
+.page .field input,.page .field select,.page .field textarea{min-height:44px}
+.page .btn{min-height:44px;line-height:1.3}
+#config .card{max-width:900px}
+#config .field input[type="color"]{min-height:0}
+#personal-dashboard .pd-stats{margin-top:22px}
+#personal-dashboard .pd-section-title{margin-top:34px}
+#personal-dashboard .pd-actions button{transition:transform .18s,border-color .18s,box-shadow .18s}
+#personal-dashboard .pd-actions button:hover{box-shadow:0 10px 28px #1e3a8a12}
+@media(max-width:900px){
+ .nav-group-label{display:none!important}
+ .side .nav button{display:inline-flex;justify-content:center;min-height:46px;gap:7px;flex:0 0 auto;padding:10px 14px;white-space:nowrap}
+ .nav .nav-glyph{min-width:18px;width:18px;font-size:17px}
+ .side .nav button:not(.active):hover{transform:none}
+ .main>.top{padding-bottom:18px;margin-bottom:20px}
+}
+@media(max-width:540px){
+ .main>.top h1{font-size:28px}
+ .main>.top .sub{font-size:13px}
+ .main>.top .pill{font-size:11px}
+ .page .card{padding:18px}
+ .pd-hero{padding:27px 23px}
+ .pd-stats{gap:9px}
+ .pd-actions{gap:10px}
+}
+</style>
 <style id="dhark-premium-design">
 /* Dhark Library Premium — shared design tokens; accent remains customizable. */
 :root{--green:#2563eb;--green-dark:#172d59;--bg:#f5f8fc;--panel:#fff;--ink:#17243b;--muted:#63738b;--line:#e2e8f1;--accent-soft:#eff5ff;--accent-ink:#1d4ed8;--accent-hover:#1e40af;--accent-border:#d6e5fc;--shadow:0 12px 38px #1e3a8a0a;--card:#fff;--border:#e2e8f1}
