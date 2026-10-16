@@ -686,12 +686,12 @@ ORDER BY ano DESC;</code></pre></details></div>
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">✳</span><div><span class="dhark-section-kicker">DHARK / INTELIGÊNCIA ARTIFICIAL</span><h2>Seu espaço de aprendizagem</h2><p>Pergunte o que quiser ao seu tutor com IA.</p></div></div>
 <div class="card dhark-ai-panel">
  <div class="eyebrow">APRENDER COM IA</div><h2>Estude o que você quiser</h2>
- <p class="muted">O Gemini pode cometer erros. Confira informações importantes e não compartilhe dados pessoais sensíveis.</p>
+ <p class="muted">A IA pode cometer erros. Confira informações importantes e não compartilhe dados pessoais sensíveis.</p>
  <div class="field"><label for="ai-topic">Assunto (qualquer área de estudo)</label><input id="ai-topic" maxlength="180" placeholder="Ex.: programação, matemática, inglês, biologia..."></div>
  <div class="field"><label for="ai-level">Seu nível</label><select id="ai-level"><option value="iniciante">Iniciante</option><option value="intermediário">Intermediário</option><option value="avançado">Avançado</option></select></div>
  <div class="field"><label for="ai-question" id="ai-question-label">Qual é sua dúvida?</label><textarea id="ai-question" rows="4" maxlength="5000" placeholder="Escreva o que você quer entender..."></textarea></div>
  <button class="btn" id="ai-submit" type="button" onclick="dharkAskAi()">Perguntar ao tutor →</button>
- <p class="muted" id="ai-status" role="status" aria-live="polite">As respostas exigem conexão com o Gemini e uma conta autenticada.</p>
+ <p class="muted" id="ai-status" role="status" aria-live="polite">As respostas exigem conexão com a GroqCloud e uma conta autenticada.</p>
  <div class="dhark-ai-output" id="ai-output" aria-live="polite" hidden><h3 id="ai-output-title">Resposta da IA</h3><pre id="ai-output-text"></pre><div class="dhark-ai-actions"><button class="btn ghost" type="button" onclick="dharkCopyAi()">Copiar resultado</button></div></div>
 
 </div>
@@ -1040,7 +1040,7 @@ async function dharkAskAi(){
  const btn=document.getElementById('ai-submit'),status=document.getElementById('ai-status'),output=document.getElementById('ai-output');
  const question=document.getElementById('ai-question').value.trim(),answer='';
  if(!question||(dharkAiMode==='grade'&&!answer)){status.textContent='Preencha a pergunta e, se for uma correção, sua resposta.';return}
- btn.disabled=true;status.textContent='Consultando o Gemini...';output.hidden=true;
+ btn.disabled=true;status.textContent='Consultando a GroqCloud...';output.hidden=true;
  try{
   const res=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:dharkAiMode,topic:document.getElementById('ai-topic').value,level:document.getElementById('ai-level').value,question,context:'',answer})});
   const data=await res.json();if(!res.ok)throw Error(data.error||'Não foi possível gerar a resposta.');
@@ -1101,7 +1101,7 @@ function dharkShowTemporaryStudyPlan(error){
  const area=(goal.match(/Área principal:\s*([^\n]+)/i)||[])[1]||'seu assunto';
  const status=document.getElementById('personal-track-status'),title=document.getElementById('personal-track-title'),list=document.getElementById('personal-track-modules'),btn=document.getElementById('personal-track-generate');
  title.textContent='Seu plano inicial de estudos';
- status.textContent='O Gemini está temporariamente indisponível. Este roteiro provisório não foi gerado pela IA. Seus objetivos estão salvos e você pode solicitar a trilha personalizada quando o serviço voltar.';
+ status.textContent='A GroqCloud está temporariamente indisponível. Este roteiro provisório não foi gerado pela IA. Seus objetivos estão salvos e você pode solicitar a trilha personalizada quando o serviço voltar.';
  list.replaceChildren();
  const steps=[
   ['1. Organize o que deseja aprender','Área de estudo: '+area+'\n\nSeu objetivo cadastrado: '+goal+'\n\nSepare 15 minutos para escrever o que você já sabe e quais assuntos ainda parecem difíceis.'],
