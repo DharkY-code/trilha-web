@@ -1428,9 +1428,34 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
  function showApp(){document.documentElement.dataset.dharkAuth='app';gate.style.display='none';if(app)app.style.setProperty('display','block','important');}
  async function checkSession(){
   const attempt=++authAttempt;
-  try{const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(r.ok){const d=await r.json();if(attempt!==authAttempt)return false;const adminButton=document.getElementById('admin-nav-button');const isAdmin=d.user?.role==='admin';if(adminButton){adminButton.hidden=!isAdmin;adminButton.style.display=isAdmin?'flex':'none';adminButton.setAttribute('aria-hidden',String(!isAdmin));}showApp();try{await dharkLoadAccount();await dharkSetupPersonalStudy(d.user);}catch(setupError){console.error('Falha ao carregar estudos após autenticação:',setupError);const status=document.getElementById('personal-track-status');if(status)status.textContent='Sua conta foi autenticada, mas não foi possível carregar os estudos: '+(setupError.message||'erro temporário')+'. Atualize a página para tentar novamente.';if(!isAdmin){document.body.classList.add('dhark-personal-account');showPage('personal-dashboard',false)}}if(!isAdmin&&location.hash==='#admin'){history.replaceState(null,'',location.pathname+location.search);showPage('personal-dashboard',false);}return true;}}catch(e){console.warn('Não foi possível confirmar a autenticação:',e)}
+  let sessionError='A verificação da sessão não foi concluída.';
+  try{
+   const r=await fetch('/api/me?check='+Date.now(),{credentials:'same-origin',cache:'no-store'});
+   if(!r.ok){const body=await r.json().catch(()=>({}));sessionError='Sessão recusada pelo servidor (HTTP '+r.status+'): '+(body.error||'sem detalhes');}
+   else{
+    const d=await r.json();
+    if(attempt!==authAttempt)return false;
+    if(!d.user){sessionError='O servidor respondeu HTTP 200, mas não informou o usuário.';}
+    else{
+     const adminButton=document.getElementById('admin-nav-button'),isAdmin=d.user.role==='admin';
+     if(adminButton){adminButton.hidden=!isAdmin;adminButton.style.display=isAdmin?'flex':'none';adminButton.setAttribute('aria-hidden',String(!isAdmin));}
+     showApp();
+     try{await dharkLoadAccount();await dharkSetupPersonalStudy(d.user);}
+     catch(setupError){
+      console.error('Falha ao carregar estudos após autenticação:',setupError);
+      const status=document.getElementById('personal-track-status');
+      if(status)status.textContent='Conta autenticada, mas os estudos não carregaram: '+(setupError.message||'erro temporário');
+      if(!isAdmin){document.body.classList.add('dhark-personal-account');showPage('personal-dashboard',false);}
+     }
+     if(!isAdmin&&location.hash==='#admin'){history.replaceState(null,'',location.pathname+location.search);showPage('personal-dashboard',false);}
+     return true;
+    }
+   }
+  }catch(e){sessionError='Falha ao consultar /api/me: '+(e?.message||'erro de rede');console.warn(sessionError,e);}
   if(attempt!==authAttempt)return false;
-  document.documentElement.dataset.dharkAuth='login';gate.style.display='grid';if(app)app.style.setProperty('display','none','important');return false;
+  document.documentElement.dataset.dharkAuth='login';gate.style.display='grid';if(app)app.style.setProperty('display','none','important');
+  msg.style.color='#9d2c42';msg.textContent=sessionError;
+  return false;
  }
  form.addEventListener('submit',async e=>{
   e.preventDefault();++authAttempt;msg.textContent='Verificando acesso…';
@@ -1440,8 +1465,8 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
    const result=await r.json().catch(()=>({}));
    if(!r.ok)throw new Error(result.error||'Não foi possível entrar. Confira usuário e senha.');
    msg.style.color='#176b3a';msg.textContent='Login realizado. Abrindo sua biblioteca…';
-   await checkSession();
-   if(gate.style.display!=='none')throw new Error('O servidor não confirmou sua sessão. Tente novamente.');
+   const confirmed=await checkSession();
+   if(!confirmed&&gate.style.display!=='none'&&!msg.textContent.includes('HTTP')&&!msg.textContent.includes('/api/me'))throw new Error('O servidor não confirmou sua sessão. Tente novamente.');
   }catch(err){msg.style.color='#9d2c42';msg.textContent=err.message||'Falha de conexão. Tente novamente.';}
  });
  await checkSession();
