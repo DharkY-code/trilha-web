@@ -1424,13 +1424,16 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 <script id="dhark-auth-gate-script">
 (async function(){
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
+ let authAttempt=0;
  function showApp(){document.documentElement.dataset.dharkAuth='app';gate.style.display='none';if(app)app.style.setProperty('display','block','important');}
  async function checkSession(){
-  try{const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(r.ok){const d=await r.json();const adminButton=document.getElementById('admin-nav-button');const isAdmin=d.user?.role==='admin';if(adminButton){adminButton.hidden=!isAdmin;adminButton.style.display=isAdmin?'flex':'none';adminButton.setAttribute('aria-hidden',String(!isAdmin));}showApp();try{await dharkLoadAccount();await dharkSetupPersonalStudy(d.user);}catch(setupError){console.error('Falha ao carregar estudos após autenticação:',setupError);const status=document.getElementById('personal-track-status');if(status)status.textContent='Sua conta foi autenticada, mas não foi possível carregar os estudos: '+(setupError.message||'erro temporário')+'. Atualize a página para tentar novamente.';if(!isAdmin){document.body.classList.add('dhark-personal-account');showPage('personal-dashboard',false)}}if(!isAdmin&&location.hash==='#admin'){history.replaceState(null,'',location.pathname+location.search);showPage('personal-dashboard',false);}return true;}}catch(e){console.warn('Não foi possível confirmar a autenticação:',e)}
+  const attempt=++authAttempt;
+  try{const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(r.ok){const d=await r.json();if(attempt!==authAttempt)return false;const adminButton=document.getElementById('admin-nav-button');const isAdmin=d.user?.role==='admin';if(adminButton){adminButton.hidden=!isAdmin;adminButton.style.display=isAdmin?'flex':'none';adminButton.setAttribute('aria-hidden',String(!isAdmin));}showApp();try{await dharkLoadAccount();await dharkSetupPersonalStudy(d.user);}catch(setupError){console.error('Falha ao carregar estudos após autenticação:',setupError);const status=document.getElementById('personal-track-status');if(status)status.textContent='Sua conta foi autenticada, mas não foi possível carregar os estudos: '+(setupError.message||'erro temporário')+'. Atualize a página para tentar novamente.';if(!isAdmin){document.body.classList.add('dhark-personal-account');showPage('personal-dashboard',false)}}if(!isAdmin&&location.hash==='#admin'){history.replaceState(null,'',location.pathname+location.search);showPage('personal-dashboard',false);}return true;}}catch(e){console.warn('Não foi possível confirmar a autenticação:',e)}
+  if(attempt!==authAttempt)return false;
   document.documentElement.dataset.dharkAuth='login';gate.style.display='grid';if(app)app.style.setProperty('display','none','important');return false;
  }
  form.addEventListener('submit',async e=>{
-  e.preventDefault();msg.textContent='Verificando acesso…';
+  e.preventDefault();++authAttempt;msg.textContent='Verificando acesso…';
   const data=new FormData(form);
   try{
    const r=await fetch('/api/login',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({username:data.get('username'),password:data.get('password')})});
