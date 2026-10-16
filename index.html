@@ -1034,7 +1034,7 @@ async function dharkAskAi(){
   const data=await res.json();if(!res.ok)throw Error(data.error||'Não foi possível gerar a resposta.');
   dharkAiLast=data.text;document.getElementById('ai-output-text').textContent=data.text;
   document.getElementById('ai-output-title').textContent=dharkAiMode==='lesson'?'Sua aula personalizada':dharkAiMode==='grade'?'Avaliação da resposta':'Orientação do tutor';
-  document.getElementById('ai-save-lesson').hidden=dharkAiMode!=='lesson';
+
   output.hidden=false;status.textContent='Concluído. Solicitações restantes hoje: '+data.remainingToday+'.';
  }catch(e){status.textContent=e.message||'Erro de conexão.'}finally{btn.disabled=false}
 }
@@ -1073,7 +1073,7 @@ function deleteCurrentNotebook(){const b=currentNotebook();if(!b||!confirm('Excl
 function renderNotebooks(){normalizeNotebooks();const list=document.getElementById("notebook-list"),body=document.getElementById("note-body"),name=document.getElementById("notebook-current-name");if(!list)return;list.innerHTML=notebookData.books.map(b=>'<button type="button" class="'+(b.id===notebookData.selectedId?'active':'')+'" onclick="selectNotebook(\''+b.id+'\')">'+escapeNotebookText(b.name)+'</button>').join("");const b=currentNotebook();if(body){body.disabled=!b;body.value=b?.text||"";body.placeholder=b?"Comece a escrever…":"Crie seu primeiro caderno para começar a escrever."}if(name){name.disabled=!b;name.value=b?.name||""}const st=document.getElementById("note-save-status");if(st)st.textContent=b?"Salvo na sua conta":"Crie seu primeiro caderno"}
 function exportNotebooks(){const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),books:notebookData.books},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="meus-cadernos-dhark.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 
-if(!notebookData.selectedId&&notebookData.books.length)notebookData.selectedId=notebookData.books[0].id;renderNotebooks();
+normalizeNotebooks();renderNotebooks();
 renderLevels();renderLessons();renderStats();renderTimeline();buildQuiz(state.quiz&&state.quiz.weakTopics&&state.quiz.weakTopics.length?state.quiz.weakTopics:null);
 const initialPage=(location.hash||'').replace('#','')||'inicio';showPage(initialPage,false);
 
