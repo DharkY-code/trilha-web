@@ -1085,6 +1085,7 @@ async function dharkSetupPersonalStudy(user){
  const realSubject=String(dharkPersonalProfile.area||'').trim().toLocaleLowerCase('pt-BR');
  if(dharkPersonalTrack && dharkPersonalTrack.subject && dharkPersonalTrack.subject.toLocaleLowerCase('pt-BR')!==realSubject){console.warn('Trilha de outra área encontrada. Preservada até revisão manual.')}
 
+ if(dharkPersonalTrack)dharkPersonalTrack.modules.forEach((m,mi)=>m.lessons.forEach((l,li)=>{l.fullContent=records['ai.personal.lesson.deep.'+(dharkPersonalVersion||'legacy')+'.'+mi+'.'+li]||l.fullContent||''}));
  dharkPersonalDone=Array.isArray(records['ai.personal.done'])?records['ai.personal.done']:[];
  dharkPersonalAnswers=records['ai.personal.answers']||{};
  dharkPersonalTests=records['ai.personal.tests']||[];
@@ -1167,7 +1168,7 @@ function dharkRenderPersonalTrack(){
    const full=document.createElement('div');full.className='personal-lesson-content';full.textContent=l.fullContent||'';full.hidden=!l.fullContent;
    deep.onclick=async()=>{if(l.fullContent){full.hidden=!full.hidden;return}deep.disabled=true;deep.textContent='Preparando aula completa…';try{
     const r=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'lesson',topic:dharkPersonalProfile.area+' — '+l.title,level:dharkPersonalProfile.level,question:'Crie uma aula completa, longa, explicativa e passo a passo sobre '+l.title+'. Objetivos pessoais: '+dharkPersonalProfile.goal,context:'Módulo: '+m.title+'. Base existente: '+l.content.slice(0,1800)})});
-    const d=await r.json();if(!r.ok)throw Error(d.error||'Falha na geração');l.fullContent=String(d.text||'');if(l.fullContent.length<900)throw Error('A explicação ficou curta. Tente novamente.');full.textContent=l.fullContent;full.hidden=false;const partKey=dharkPersonalVersion?'ai.personal.track.v'+dharkPersonalVersion+'.part.':'ai.personal.track.part.';const partIndex=Math.floor(mi/4)*4;const part={title:dharkPersonalTrack.title,subject:dharkPersonalProfile.area,modules:dharkPersonalTrack.modules.slice(partIndex,partIndex+4)};await dharkPersist(partKey+partIndex,part);deep.textContent='Mostrar/ocultar aula aprofundada';
+    const d=await r.json();if(!r.ok)throw Error(d.error||'Falha na geração');l.fullContent=String(d.text||'');if(l.fullContent.length<900)throw Error('A explicação ficou curta. Tente novamente.');full.textContent=l.fullContent;full.hidden=false;await dharkPersist('ai.personal.lesson.deep.'+(dharkPersonalVersion||'legacy')+'.'+mi+'.'+li,l.fullContent);deep.textContent='Mostrar/ocultar aula aprofundada';
    }catch(e){deep.textContent='Tentar aprofundar novamente';const warning=document.createElement('p');warning.textContent='Não foi possível aprofundar: '+e.message;tools.appendChild(warning)}finally{deep.disabled=false}};
    tools.appendChild(deep);
    if((mi+li)%2===0){const link=document.createElement('a');link.className='btn ghost small';link.target='_blank';link.rel='noopener noreferrer';link.href='https://www.youtube.com/results?search_query='+encodeURIComponent('aula explicativa '+dharkPersonalProfile.area+' '+l.title);link.textContent='▶ Buscar vídeo explicativo';link.title='Abre resultados de busca no YouTube; vídeos não foram verificados';tools.appendChild(link)}
