@@ -359,6 +359,34 @@ html[data-dhark-auth="app"] .main{display:block;margin:0 auto!important;height:a
 #caderno .notebook-top h2{font-size:clamp(43px,5.8vw,72px)}
 .section-head h2{font-size:22px}
 }
+
+/* Layout linear das abas: elimina definitivamente linhas vazias do CSS Grid
+   e mantém cada seção logo abaixo do cabeçalho. */
+html[data-dhark-auth="app"] .main{padding-top:18px!important}
+html[data-dhark-auth="app"] .page.active:not(#inicio):not(#caderno){display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;align-content:flex-start!important;gap:16px!important;grid-template-columns:none!important;grid-template-rows:none!important;grid-auto-rows:auto!important;min-height:0!important;height:auto!important}
+html[data-dhark-auth="app"] .page.active:not(#inicio):not(#caderno)>*{grid-row:auto!important;grid-column:auto!important;align-self:auto!important;width:100%;min-width:0;max-width:100%;margin-top:0!important}
+html[data-dhark-auth="app"] #trilha>.dhark-section-banner+.card{position:static!important;min-height:0!important}
+html[data-dhark-auth="app"] #trilha>#all-levels{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:15px!important;align-self:stretch!important}
+html[data-dhark-auth="app"] #trilha>.card:last-child{position:static!important;max-width:none}
+html[data-dhark-auth="app"] #aulas>.lesson-layout{display:grid!important;grid-template-columns:minmax(0,1.65fr) minmax(250px,.8fr)!important;gap:16px!important}
+html[data-dhark-auth="app"] #pratica>.grid,html[data-dhark-auth="app"] #dominios>.resource-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important}
+html[data-dhark-auth="app"] #prova>.card,html[data-dhark-auth="app"] #tutor>.card,html[data-dhark-auth="app"] #config>.card{width:min(100%,980px)!important;align-self:center!important}
+.dhark-section-banner{isolation:isolate}
+.dhark-section-banner:after{z-index:-1!important;pointer-events:none!important}
+.dhark-section-banner>.dhark-section-symbol,.dhark-section-banner>div{position:relative;z-index:1}
+.dhark-section-banner>div{min-width:0;overflow-wrap:anywhere}
+@media(max-width:950px){
+html[data-dhark-auth="app"] #trilha>#all-levels{grid-template-columns:minmax(0,1fr)!important}
+html[data-dhark-auth="app"] #aulas>.lesson-layout,html[data-dhark-auth="app"] #pratica>.grid,html[data-dhark-auth="app"] #dominios>.resource-grid{grid-template-columns:minmax(0,1fr)!important}
+}
+@media(max-width:650px){
+html[data-dhark-auth="app"] .main{padding-top:12px!important}
+html[data-dhark-auth="app"] .page.active:not(#inicio):not(#caderno){gap:12px!important}
+.dhark-section-banner:after{display:none!important}
+.dhark-section-banner{padding:16px!important;min-height:0!important}
+.dhark-section-banner h2{font-size:clamp(19px,5vw,24px)!important;line-height:1.2}
+.dhark-section-banner p{font-size:12px}
+}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
