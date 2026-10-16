@@ -918,8 +918,7 @@ async function dharkLoadAccount(){
  const records=Object.fromEntries((data.progress||[]).map(item=>[item.key,item.value]));
  state={...defaults,...(records.trilhaWebState||{}),history:records.trilhaWebState?.history||{},completed:Array.isArray(records.trilhaWebState?.completed)?records.trilhaWebState.completed:[],categoryPasses:records.trilhaWebState?.categoryPasses||{},categoryExamAttempts:records.trilhaWebState?.categoryExamAttempts||{}};
  notebookData={selectedId:null,editingId:null,books:[],...(records.dharkLibraryNotebooks||{})};
- notebookData.books=Array.isArray(notebookData.books)?notebookData.books:[];
- if(!notebookData.selectedId&&notebookData.books.length)notebookData.selectedId=notebookData.books[0].id;
+ normalizeNotebooks();
  renderNotebooks();renderLevels();renderLessons();renderStats();renderTimeline();
  buildQuiz(state.quiz?.weakTopics?.length?state.quiz.weakTopics:null);
 }
@@ -1020,18 +1019,18 @@ function dharkSetAiMode(mode){
  document.getElementById('ai-context-wrap').hidden=mode!=='grade';
  document.getElementById('ai-answer-wrap').hidden=mode!=='grade';
  document.getElementById('ai-submit').textContent=mode==='lesson'?'Criar minha aula →':mode==='grade'?'Avaliar minha resposta →':'Perguntar ao tutor →';
- document.getElementById('ai-save-lesson').hidden=true;
+ 
  document.getElementById('ai-output').hidden=true;
  document.getElementById('ai-status').textContent='';
  if(mode==='lesson')dharkListAiLessons();
 }
 async function dharkAskAi(){
  const btn=document.getElementById('ai-submit'),status=document.getElementById('ai-status'),output=document.getElementById('ai-output');
- const question=document.getElementById('ai-question').value.trim(),answer=document.getElementById('ai-answer').value.trim();
+ const question=document.getElementById('ai-question').value.trim(),answer='';
  if(!question||(dharkAiMode==='grade'&&!answer)){status.textContent='Preencha a pergunta e, se for uma correção, sua resposta.';return}
  btn.disabled=true;status.textContent='Consultando o Gemini...';output.hidden=true;
  try{
-  const res=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:dharkAiMode,topic:document.getElementById('ai-topic').value,level:document.getElementById('ai-level').value,question,context:document.getElementById('ai-context').value,answer})});
+  const res=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:dharkAiMode,topic:document.getElementById('ai-topic').value,level:document.getElementById('ai-level').value,question,context:'',answer})});
   const data=await res.json();if(!res.ok)throw Error(data.error||'Não foi possível gerar a resposta.');
   dharkAiLast=data.text;document.getElementById('ai-output-text').textContent=data.text;
   document.getElementById('ai-output-title').textContent=dharkAiMode==='lesson'?'Sua aula personalizada':dharkAiMode==='grade'?'Avaliação da resposta':'Orientação do tutor';
@@ -1055,23 +1054,24 @@ function GenCopy(){let text=window._tutorQuestion||"";if(navigator.clipboard&&na
 function exportData(){let blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="meu-progresso-dhark-library.json";a.click();URL.revokeObjectURL(url)}
 function resetData(){if(confirm("Tem certeza de que deseja apagar horas, meta e aulas marcadas?")){state={...defaults,history:{}};save();renderLevels();renderLessons();renderTimeline()}}
 
-// Caderno digital: dados salvos no localStorage deste navegador.
-let notebookData={selectedId:null,editingId:null,books:[]};
-
-function saveNotebookData(){void dharkPersist("dharkLibraryNotebooks",notebookData);const st=document.getElementById("note-save-status");if(st)st.textContent="Sincronizando com sua conta…"}
-function createNotebook(){const input=document.getElementById("notebook-name"),name=input.value.trim();if(!name){alert("Digite um nome para o caderno.");input.focus();return}const book={id:"book-"+Date.now(),name,notes:[]};notebookData.books.push(book);notebookData.selectedId=book.id;notebookData.editingId=null;input.value="";saveNotebookData();renderNotebooks();newNote()}
-function renderNotebooks(){const list=document.getElementById("notebook-list");if(!list)return;list.innerHTML=notebookData.books.map(b=>`<div class="lesson-item" style="align-items:flex-start"><span style="flex:1"><strong>${escapeNotebookText(b.name)}</strong><small>${b.notes.length} anotação(ões)</small><div style="margin-top:7px"><button class="btn ghost small" onclick="selectNotebook('${b.id}')">Abrir</button> <button class="btn ghost small" onclick="renameNotebook('${b.id}')">Renomear</button> <button class="btn ghost small" onclick="deleteNotebook('${b.id}')">Excluir</button></div></span></div>`).join("")||'<p class="muted">Você ainda não criou nenhum caderno.</p>';renderNotes()}
+// Cadernos de texto contínuo, sincronizados por conta no D1.
+let notebookData={selectedId:null,books:[]};
+let notebookSaveTimer=null;
 function escapeNotebookText(t){return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
 function currentNotebook(){return notebookData.books.find(b=>b.id===notebookData.selectedId)||null}
-function selectNotebook(id){notebookData.selectedId=id;notebookData.editingId=null;renderNotebooks();newNote()}
-function renameNotebook(id){const b=notebookData.books.find(x=>x.id===id);if(!b)return;const name=prompt("Novo nome do caderno:",b.name);if(name&&name.trim()){b.name=name.trim();saveNotebookData();renderNotebooks()}}
-function deleteNotebook(id){const b=notebookData.books.find(x=>x.id===id);if(!b)return;if(!confirm('Excluir o caderno "'+b.name+'" e todas as suas anotações?'))return;notebookData.books=notebookData.books.filter(x=>x.id!==id);if(notebookData.selectedId===id)notebookData.selectedId=notebookData.books[0]?.id||null;notebookData.editingId=null;saveNotebookData();renderNotebooks();newNote()}
-function newNote(){notebookData.editingId=null;const title=document.getElementById("note-title"),body=document.getElementById("note-body");if(title)title.value="";if(body)body.value="";const h=document.getElementById("note-editor-title");if(h)h.textContent=currentNotebook()?"Nova anotação — "+currentNotebook().name:"Crie ou selecione um caderno";renderNotes()}
-function saveNote(){const book=currentNotebook();if(!book){alert("Crie ou selecione um caderno primeiro.");return}const title=document.getElementById("note-title").value.trim(),body=document.getElementById("note-body").value.trim();if(!title&&!body){alert("Escreva um título ou o conteúdo da anotação.");return}if(notebookData.editingId){const note=book.notes.find(n=>n.id===notebookData.editingId);if(note){note.title=title||"Anotação sem título";note.body=body;note.updatedAt=new Date().toISOString()}}else{const note={id:"note-"+Date.now(),title:title||"Anotação sem título",body,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};book.notes.unshift(note);notebookData.editingId=note.id}saveNotebookData();renderNotebooks();document.getElementById("note-save-status").textContent="Salvo agora"}
-function editNote(id){const b=currentNotebook();const n=b?.notes.find(x=>x.id===id);if(!n)return;notebookData.editingId=id;document.getElementById("note-title").value=n.title;document.getElementById("note-body").value=n.body;document.getElementById("note-editor-title").textContent="Editando anotação";renderNotes()}
-function deleteNote(id){const b=currentNotebook();if(!b||!confirm("Excluir esta anotação?"))return;b.notes=b.notes.filter(n=>n.id!==id);if(notebookData.editingId===id)newNote();saveNotebookData();renderNotebooks()}
-function renderNotes(){const list=document.getElementById("notes-list");if(!list)return;const b=currentNotebook();list.innerHTML=!b?'<p class="muted">Selecione ou crie um caderno para ver suas anotações.</p>':b.notes.map(n=>`<div class="lesson-item" style="align-items:flex-start"><span style="flex:1;min-width:0"><strong>${escapeNotebookText(n.title)}</strong><small>${new Date(n.updatedAt||n.createdAt).toLocaleString('pt-BR')}</small><p style="white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0">${escapeNotebookText((n.body||"").slice(0,240))}${(n.body||"").length>240?"…":""}</p><button class="btn ghost small" onclick="editNote('${n.id}')">Editar</button> <button class="btn ghost small" onclick="deleteNote('${n.id}')">Excluir</button></span></div>`).join("")||'<p class="muted">Este caderno ainda não tem anotações.</p>'}
-function exportNotebooks(){const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),books:notebookData.books},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="dhark-library-cadernos.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function normalizeNotebooks(){
+ notebookData.books=(Array.isArray(notebookData.books)?notebookData.books:[]).map(b=>({...b,text:typeof b.text==="string"?b.text:(Array.isArray(b.notes)?[...b.notes].reverse().map(n=>[n.title,n.body].filter(Boolean).join("\\n")).join("\\n\\n"): "")}));
+ if(!notebookData.selectedId||!currentNotebook())notebookData.selectedId=notebookData.books[0]?.id||null;
+}
+function saveNotebookData(){const st=document.getElementById("note-save-status");if(st)st.textContent="Salvando…";void dharkPersist("dharkLibraryNotebooks",notebookData).then(()=>{if(st)st.textContent="Salvo na sua conta ✓"}).catch(()=>{if(st)st.textContent="Erro ao salvar"})}
+function flushNotebookSave(){if(notebookSaveTimer){clearTimeout(notebookSaveTimer);notebookSaveTimer=null;saveNotebookData()}}
+function dharkNotebookTyping(value){const b=currentNotebook();if(!b)return;b.text=value;const st=document.getElementById("note-save-status");if(st)st.textContent="Escrevendo…";clearTimeout(notebookSaveTimer);notebookSaveTimer=setTimeout(()=>{notebookSaveTimer=null;saveNotebookData()},850)}
+function createNotebook(){flushNotebookSave();const name=prompt("Como deseja chamar seu novo caderno?","Meu caderno");if(name===null)return;const title=name.trim().slice(0,100);if(!title)return;const b={id:"book-"+crypto.randomUUID(),name:title,text:""};notebookData.books.push(b);notebookData.selectedId=b.id;saveNotebookData();renderNotebooks();document.getElementById("note-body")?.focus()}
+function selectNotebook(id){flushNotebookSave();notebookData.selectedId=id;renderNotebooks();saveNotebookData()}
+function renameCurrentNotebook(value){const b=currentNotebook();if(!b)return;b.name=value.trim().slice(0,100)||"Sem título";saveNotebookData();renderNotebooks()}
+function deleteCurrentNotebook(){const b=currentNotebook();if(!b||!confirm('Excluir o caderno "'+b.name+'" e todo o texto?'))return;flushNotebookSave();notebookData.books=notebookData.books.filter(x=>x.id!==b.id);notebookData.selectedId=notebookData.books[0]?.id||null;saveNotebookData();renderNotebooks()}
+function renderNotebooks(){normalizeNotebooks();const list=document.getElementById("notebook-list"),body=document.getElementById("note-body"),name=document.getElementById("notebook-current-name");if(!list)return;list.innerHTML=notebookData.books.map(b=>'<button type="button" class="'+(b.id===notebookData.selectedId?'active':'')+'" onclick="selectNotebook(\''+b.id+'\')">'+escapeNotebookText(b.name)+'</button>').join("");const b=currentNotebook();if(body){body.disabled=!b;body.value=b?.text||"";body.placeholder=b?"Comece a escrever…":"Crie seu primeiro caderno para começar a escrever."}if(name){name.disabled=!b;name.value=b?.name||""}const st=document.getElementById("note-save-status");if(st)st.textContent=b?"Salvo na sua conta":"Crie seu primeiro caderno"}
+function exportNotebooks(){const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),books:notebookData.books},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="meus-cadernos-dhark.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 
 if(!notebookData.selectedId&&notebookData.books.length)notebookData.selectedId=notebookData.books[0].id;renderNotebooks();
 renderLevels();renderLessons();renderStats();renderTimeline();buildQuiz(state.quiz&&state.quiz.weakTopics&&state.quiz.weakTopics.length?state.quiz.weakTopics:null);
