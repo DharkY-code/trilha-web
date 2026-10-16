@@ -626,7 +626,7 @@ body.dhark-personal-account .side-note{display:none}
 
 <section class="page" id="minha-trilha-ia">
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">◇</span><div><span class="dhark-section-kicker">DHARK / SEU PLANO</span><h2>Minha trilha personalizada</h2><p>Uma jornada criada para seus objetivos e suas dificuldades.</p></div></div>
-<div class="card dhark-personal-track"><div class="eyebrow">SEU CAMINHO DE ESTUDOS</div><h2 id="personal-track-title">Preparando sua trilha…</h2><p id="personal-track-goal" class="muted"></p><p id="personal-track-status" role="status" aria-live="polite">Aguarde enquanto preparamos suas aulas.</p><button class="btn" type="button" id="personal-track-generate" onclick="dharkGeneratePersonalTrack()" hidden>Gerar minha trilha com IA</button><div id="personal-track-modules"></div><button type="button" class="btn" id="personal-track-more" onclick="dharkGeneratePersonalTrack()" hidden>Gerar próximos módulos</button></div>
+<div class="card dhark-personal-track"><div class="eyebrow">SEU CAMINHO DE ESTUDOS</div><h2 id="personal-track-title">Preparando sua trilha…</h2><p id="personal-track-goal" class="muted"></p><p id="personal-track-status" role="status" aria-live="polite">Aguarde enquanto preparamos suas aulas.</p><button class="btn" type="button" id="personal-track-generate" onclick="dharkGeneratePersonalTrack()" hidden>Gerar minha trilha com IA</button><div id="personal-track-modules"></div><button type="button" class="btn ghost small" id="personal-track-rebuild" onclick="dharkRebuildPersonalTrack()" hidden>Recriar trilha para minha área de estudo</button><button type="button" class="btn" id="personal-track-more" onclick="dharkGeneratePersonalTrack()" hidden>Gerar próximos módulos</button></div>
 </section>
 <section class="page" id="trilha">
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">◇</span><div><span class="dhark-section-kicker">DHARK / TRILHA</span><h2>Mapa de evolução</h2><p>Uma jornada organizada por etapas.</p></div></div>
@@ -1066,7 +1066,7 @@ function exportData(){let blob=new Blob([JSON.stringify(state,null,2)],{type:"ap
 function resetData(){if(confirm("Tem certeza de que deseja apagar horas, meta e aulas marcadas?")){state={...defaults,history:{}};save();renderLevels();renderLessons();renderTimeline()}}
 
 // Cada conta comum recebe sua própria trilha, gerada com base no perfil do cadastro.
-let dharkPersonalProfile=null,dharkPersonalTrack=null,dharkPersonalDone=[],dharkPersonalAnswers={},dharkPersonalTests=[];
+let dharkPersonalProfile=null,dharkPersonalTrack=null,dharkPersonalDone=[],dharkPersonalAnswers={},dharkPersonalTests=[],dharkPersonalVersion=0;
 async function dharkSetupPersonalStudy(user){
  if(user?.role==='admin'){document.body.classList.remove('dhark-personal-account');return}
  const r=await fetch('/api/study-profile',{credentials:'same-origin',cache:'no-store'});
@@ -1078,7 +1078,9 @@ async function dharkSetupPersonalStudy(user){
  const progress=await fetch('/api/progress',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json());
  const records=Object.fromEntries((progress.progress||[]).map(x=>[x.key,x.value]));
  dharkPersonalTrack=records['ai.personal.track']||null;
- const chunks=Object.keys(records).filter(k=>/^ai\\.personal\\.track\\.part\\.\\d+$/.test(k)).sort((a,b)=>Number(a.split('.').pop())-Number(b.split('.').pop()));
+ dharkPersonalVersion=Number(records['ai.personal.active.version']||0);
+ if(dharkPersonalVersion)dharkPersonalTrack=null;
+ const chunks=Object.keys(records).filter(k=>dharkPersonalVersion?k.startsWith('ai.personal.track.v'+dharkPersonalVersion+'.part.'): /^ai\\.personal\\.track\\.part\\.\\d+$/.test(k)).sort((a,b)=>Number(a.split('.').pop())-Number(b.split('.').pop()));
  if(chunks.length){const modules=chunks.flatMap(k=>records[k]?.modules||[]);dharkPersonalTrack={title:records[chunks[0]]?.title||'Minha trilha',modules,subject:records[chunks[0]]?.subject||''}}
  const realSubject=String(dharkPersonalProfile.area||'').trim().toLocaleLowerCase('pt-BR');
  if(dharkPersonalTrack && dharkPersonalTrack.subject && dharkPersonalTrack.subject.toLocaleLowerCase('pt-BR')!==realSubject){console.warn('Trilha de outra área encontrada. Preservada até revisão manual.')}
@@ -1087,8 +1089,8 @@ async function dharkSetupPersonalStudy(user){
  dharkPersonalAnswers=records['ai.personal.answers']||{};
  dharkPersonalTests=records['ai.personal.tests']||[];
  dharkRenderPersonalTrack();
- if(!dharkPersonalTrack)void dharkGeneratePersonalTrack();
- else if(dharkPersonalProfile.level==='curso_completo'&&dharkPersonalTrack.modules.length<12)void dharkGeneratePersonalTrack(true);
+ if(!dharkPersonalTrack)void dharkGeneratePersonalTrack(true);
+ else if(dharkPersonalProfile.level==='curso_completo'&&dharkPersonalTrack.modules.length<12&&dharkPersonalTrack.subject&&dharkPersonalTrack.subject.toLocaleLowerCase('pt-BR')===String(dharkPersonalProfile.area||'').toLocaleLowerCase('pt-BR'))void dharkGeneratePersonalTrack(true);
  showPage('minha-trilha-ia',false);
 }
 function dharkShowTemporaryStudyPlan(error){
@@ -1106,6 +1108,18 @@ function dharkShowTemporaryStudyPlan(error){
  for(const [heading,body] of steps){const section=document.createElement('section');section.className='personal-module';const h=document.createElement('h3');h.textContent=heading;section.appendChild(h);const p=document.createElement('p');p.className='personal-lesson-content';p.style.padding='0 18px 18px';p.textContent=body;section.appendChild(p);list.appendChild(section)}
  btn.hidden=false;btn.textContent='Tentar criar minha trilha com IA';
 }
+async function dharkRebuildPersonalTrack(){
+ if(!dharkPersonalProfile||!confirm('Criar uma nova trilha para '+dharkPersonalProfile.area+'? A trilha atual será guardada como backup, mas seu progresso anterior não será aplicado às novas aulas.'))return;
+ const backup={date:new Date().toISOString(),track:dharkPersonalTrack,done:dharkPersonalDone};
+ try{
+  await dharkPersist('ai.personal.backup.'+Date.now(),backup);
+  // Marca a versão ativa; partes anteriores permanecem como backup, mas não serão carregadas.
+  const version=Date.now();
+  await dharkPersist('ai.personal.active.version',version);
+  dharkPersonalVersion=version;dharkPersonalTrack=null;dharkPersonalDone=[];await dharkPersist('ai.personal.done',[]);
+  dharkRenderPersonalTrack();await dharkGeneratePersonalTrack(true);
+ }catch(e){alert('Não foi possível preparar a nova trilha: '+e.message)}
+}
 async function dharkGeneratePersonalTrack(autoContinue=false){
  if(!dharkPersonalProfile)return;
  const btn=document.getElementById('personal-track-generate'),status=document.getElementById('personal-track-status');
@@ -1122,7 +1136,7 @@ async function dharkGeneratePersonalTrack(autoContinue=false){
   const subject=dharkPersonalProfile.area||'Estudos';
   const title=dharkPersonalTrack?.title||String(track.title||'Minha trilha').slice(0,140);
   const newPart={title,subject,modules:freshModules};
-  await dharkPersist('ai.personal.track.part.'+before,newPart);
+  await dharkPersist(dharkPersonalVersion?'ai.personal.track.v'+dharkPersonalVersion+'.part.'+before:'ai.personal.track.part.'+before,newPart);
   dharkPersonalTrack=dharkPersonalTrack?{...dharkPersonalTrack,subject,modules:[...dharkPersonalTrack.modules,...freshModules]}:{title,subject,modules:freshModules};
   dharkRenderPersonalTrack();
  }catch(e){console.warn('Geração de trilha indisponível:',e.message);if(dharkPersonalTrack){dharkRenderPersonalTrack();const status=document.getElementById('personal-track-status');status.textContent+=' Não foi possível gerar os próximos módulos agora: '+e.message}else dharkShowTemporaryStudyPlan(e)}finally{window.dharkTrackGenerating=false}
@@ -1135,6 +1149,7 @@ function dharkRenderPersonalTrack(){
  const all=dharkPersonalTrack.modules.reduce((n,m)=>n+m.lessons.length,0);
  const level=dharkPersonalProfile?.level||'basico',target=level==='curso_completo'?12:level==='intermediario'?4:3;
  const more=document.getElementById('personal-track-more');if(more){more.hidden=level!=='curso_completo'||dharkPersonalTrack.modules.length>=target;more.textContent='Gerar próximos módulos ('+dharkPersonalTrack.modules.length+'/'+target+')'}
+ const rebuild=document.getElementById('personal-track-rebuild');if(rebuild)rebuild.hidden=false;
  status.textContent=dharkPersonalDone.length+' de '+all+' aulas concluídas. '+(level==='curso_completo'?'Curso completo: '+dharkPersonalTrack.modules.length+' de '+target+' módulos gerados por etapas. ':'')+'Seu progresso é salvo na sua conta.';
  list.replaceChildren();
  dharkPersonalTrack.modules.forEach((m,mi)=>{
