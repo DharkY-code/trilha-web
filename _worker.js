@@ -339,20 +339,26 @@ async function handleApi(request, env) {
       return json({ error: "Não foi possível conectar ao Gemini. Tente novamente." }, 502);
     } finally { clearTimeout(timeout); }
     if (!response.ok) {
-      // Não expor o corpo bruto do provedor: pode conter detalhes sensíveis.
-      let providerCode = "";
-      try { const failure = await response.json(); providerCode = String(failure?.error?.status || "").slice(0, 60); } catch (_) {}
-      console.error("Gemini upstream", response.status, providerCode);
+      // Diagnóstico limitado a campos não sensíveis. Nunca retornar headers, chave ou corpo bruto.
+      let providerCode = "", providerMessage = "";
+      try {
+        const failure = await response.json();
+        providerCode = String(failure?.error?.status || "").slice(0, 60);
+        providerMessage = String(failure?.error?.message || "").slice(0, 500);
+      } catch (_) {}
+      console.error("Gemini upstream", response.status, providerCode, providerMessage);
       const hints = {
-        400: "O Gemini rejeitou a solicitação. Verifique a configuração do modelo.",
+        400: "O Gemini rejeitou a solicitação.",
         401: "A chave Gemini não foi aceita. Confira o segredo GEMINI_API_KEY no Cloudflare.",
-        403: "A chave Gemini não tem permissão para usar esta API. Confira as restrições e o projeto no Google AI Studio.",
-        404: "O modelo Gemini configurado não foi encontrado ou não está disponível para esta API.",
-        429: "O Gemini atingiu um limite de uso ou de cota. Confira os limites do projeto no Google AI Studio.",
-        500: "O serviço Gemini apresentou um erro temporário.",
-        503: "O serviço Gemini está temporariamente indisponível."
+        403: "A chave Gemini não tem permissão para usar esta API. Confira o Google AI Studio.",
+        404: "O modelo Gemini não foi encontrado para esta versão da API.",
+        429: "O Gemini atingiu o limite de uso ou de cota.",
+        500: "O Gemini apresentou um erro temporário.",
+        503: "O Gemini está temporariamente indisponível."
       };
-      return json({ error: hints[response.status] || "Falha na comunicação com o Gemini (HTTP " + response.status + ").", providerStatus: response.status, providerCode }, response.status === 429 ? 429 : 502);
+      // Retornar só informações de diagnóstico específicas e sanitizadas.
+      const safeDetail = providerMessage.replace(/AIza[0-9A-Za-z_-]+/g, "[chave oculta]").replace(/https?:\\/\\/\\S+/g, "[URL oculta]");
+      return json({ error: (hints[response.status] || "Falha na comunicação com o Gemini.") + " HTTP " + response.status + (providerCode ? " (" + providerCode + ")" : "") + (safeDetail ? " — " + safeDetail : ""), providerStatus: response.status, providerCode }, response.status === 429 ? 429 : 502);
     }
     const data = await response.json();
     const text = (data.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("\\n").trim();
