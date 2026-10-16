@@ -1,5 +1,5 @@
 /* Dhark Library — cache offline. */
-const CACHE_VERSION = "dhark-library-v35";
+const CACHE_VERSION = "dhark-library-v36";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.svg", "./icons/icon-512.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_VERSION).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
