@@ -507,6 +507,18 @@ html[data-dhark-auth="app"] #caderno.page.active>.notebook-top:after{
  #caderno .notebook-top-copy>p{font-size:11px!important}
  html[data-dhark-auth="app"] #caderno.page.active>.notebook-top:after{right:-110px;top:-75px}
 }
+
+#tutor .dhark-ai-panel{max-width:1000px;margin:0 auto 22px!important;padding:clamp(18px,3vw,32px)!important}
+#tutor .dhark-ai-modes{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+#tutor .dhark-ai-modes .btn{flex:1 1 175px;justify-content:center}
+#tutor .dhark-ai-panel>.field{margin:15px 0}
+#tutor .dhark-ai-panel textarea{min-height:95px}
+#tutor .dhark-ai-output{margin-top:22px;padding:20px;border:1px solid var(--accent-border);border-radius:16px;background:var(--accent-soft)}
+#tutor .dhark-ai-output pre{font-family:inherit;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;font-size:14px;color:var(--ink);max-height:650px;overflow:auto}
+#tutor .dhark-ai-actions{display:flex;gap:10px;flex-wrap:wrap}
+#tutor .dhark-ai-saved{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+#tutor .dhark-ai-saved h3{flex:0 0 100%;margin:0}
+#tutor [hidden]{display:none!important}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
@@ -652,11 +664,25 @@ ORDER BY ano DESC;</code></pre></details></div>
 </section>
 
 <section class="page" id="tutor">
-<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">✳</span><div><span class="dhark-section-kicker">DHARK / TUTOR</span><h2>Orientação de estudos</h2><p>Estruture dúvidas e planeje próximos passos.</p></div></div>
-<div class="card"><div class="eyebrow">Assistente de aprendizagem</div><h2>Tutor de estudo</h2><p class="muted">Use este espaço para preparar sua dúvida e obter orientação contextual. A integração com uma IA real ainda precisa de uma API segura e um back-end; esta versão não envia mensagens para um modelo de IA.</p><div class="notice">Não coloque chaves de API ou senhas no navegador. A integração real deve proteger credenciais no servidor.</div>
-<div class="field"><label for="topic">Assunto da aula</label><select id="topic"><option>HTML e semântica</option><option>CSS e responsividade</option><option>JavaScript e lógica</option><option>Git e GitHub</option><option>SQL e modelagem</option><option>Back-end e APIs</option><option>Projeto final</option></select></div>
-<div class="field"><label for="tutor-question">Sua dúvida</label><textarea id="tutor-question" placeholder="Ex.: Não entendi a diferença entre WHERE e HAVING..."></textarea></div>
-<button class="btn" onclick="tutorHelp()">Preparar orientação</button><div id="tutor-output" aria-live="polite"></div></div>
+<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">✳</span><div><span class="dhark-section-kicker">DHARK / INTELIGÊNCIA ARTIFICIAL</span><h2>Seu espaço de aprendizagem</h2><p>Tire dúvidas, crie aulas e revise suas respostas com o Gemini.</p></div></div>
+<div class="card dhark-ai-panel">
+ <div class="eyebrow">APRENDER COM IA</div><h2>Estude o que você quiser</h2>
+ <p class="muted">O Gemini pode cometer erros. Confira informações importantes e não compartilhe dados pessoais sensíveis.</p>
+ <div class="dhark-ai-modes" role="group" aria-label="Modo de estudo">
+ <button type="button" class="btn dhark-ai-mode active" data-ai-mode="tutor" onclick="dharkSetAiMode('tutor')">✳ Tirar dúvidas</button>
+ <button type="button" class="btn ghost dhark-ai-mode" data-ai-mode="lesson" onclick="dharkSetAiMode('lesson')">▤ Criar aula</button>
+ <button type="button" class="btn ghost dhark-ai-mode" data-ai-mode="grade" onclick="dharkSetAiMode('grade')">✓ Corrigir resposta</button>
+ </div>
+ <div class="field"><label for="ai-topic">Assunto (qualquer área de estudo)</label><input id="ai-topic" maxlength="180" placeholder="Ex.: programação, matemática, inglês, biologia..."></div>
+ <div class="field"><label for="ai-level">Seu nível</label><select id="ai-level"><option value="iniciante">Iniciante</option><option value="intermediário">Intermediário</option><option value="avançado">Avançado</option></select></div>
+ <div class="field"><label for="ai-question" id="ai-question-label">Qual é sua dúvida?</label><textarea id="ai-question" rows="4" maxlength="5000" placeholder="Escreva o que você quer entender..."></textarea></div>
+ <div class="field" id="ai-context-wrap" hidden><label for="ai-context">Contexto ou critérios de correção (opcional)</label><textarea id="ai-context" rows="3" maxlength="3500" placeholder="Enunciado completo, critérios, material de referência..."></textarea></div>
+ <div class="field" id="ai-answer-wrap" hidden><label for="ai-answer">Sua resposta</label><textarea id="ai-answer" rows="5" maxlength="3500" placeholder="Digite sua resposta para receber feedback..."></textarea></div>
+ <button class="btn" id="ai-submit" type="button" onclick="dharkAskAi()">Perguntar ao tutor →</button>
+ <p class="muted" id="ai-status" role="status" aria-live="polite">As respostas exigem conexão com o Gemini e uma conta autenticada.</p>
+ <div class="dhark-ai-output" id="ai-output" aria-live="polite" hidden><h3 id="ai-output-title">Resposta da IA</h3><pre id="ai-output-text"></pre><div class="dhark-ai-actions"><button class="btn ghost" type="button" onclick="dharkCopyAi()">Copiar resultado</button><button class="btn ghost" id="ai-save-lesson" type="button" onclick="dharkSaveAiLesson()" hidden>Salvar aula na minha conta</button></div></div>
+ <div id="ai-saved-lessons" class="dhark-ai-saved"></div>
+</div>
 </section>
 
 <section class="page" id="dominios">
@@ -984,6 +1010,45 @@ function checkSQL(){let a=document.getElementById("sql-answer").value.toLowerCas
 let activeCategoryExam=false;
 function startCategoryExam(){const cat=document.getElementById('track-filter').value;if(!categoryLessonsDone(cat)){alert('Marque as aulas obrigatórias como concluídas antes de fazer a prova. Aulas opcionais não são exigidas.');return}activeCategoryExam=true;const ls=lessons.filter(l=>l.category===cat&&l.kind!=="Opcional");const pool=ls.flatMap(l=>(l.keywords||[]).map(k=>({topic:cat,q:`Na categoria “${cat}”, qual conceito está diretamente relacionado à aula “${l.title}”?`,answer:k,explain:`Revise a aula “${l.title}” e confira como o conceito “${k}” se aplica.`}))).filter(q=>q.answer&&q.answer.length>1);const picked=shuffleArray(pool).slice(0,5);if(picked.length<5){alert('Esta categoria ainda não tem material suficiente para montar uma prova.');return}currentQuizQuestions=picked.map(q=>{const wrong=shuffleArray(pool.filter(x=>x.answer!==q.answer).map(x=>x.answer)).slice(0,3);const opts=shuffleArray([q.answer,...wrong]);return {topic:cat,q:q.q,options:opts,correct:opts.indexOf(q.answer),explain:q.explain}});document.getElementById('quiz-questions').innerHTML=currentQuizQuestions.map((q,i)=>`<div class="question"><p>${i+1}. ${escapeHtml(q.q)}</p>${q.options.map((o,j)=>`<label class="option"><input type="radio" name="q${i}" value="${j}" required> ${escapeHtml(o)}</label>`).join('')}</div>`).join('');document.getElementById('quiz-form').reset();document.getElementById('quiz-result').innerHTML='';document.getElementById('quiz-mode-note').textContent=`Prova semanal da categoria: ${cat}. São 5 questões sorteadas; é preciso acertar pelo menos 4 (80%) para liberar a próxima categoria.`;activeCategoryExam=true;showPage('prova')}
 document.getElementById("quiz-form").addEventListener("submit",e=>{e.preventDefault();if(!currentQuizQuestions.length)buildQuiz();const form=new FormData(e.target);let score=0,miss=[];currentQuizQuestions.forEach((q,i)=>{const chosen=Number(form.get('q'+i));if(chosen===q.correct)score++;else if(!miss.includes(q.topic))miss.push(q.topic)});const pct=Math.round(score/currentQuizQuestions.length*100);const passed=pct>=80;if(activeCategoryExam){const cat=currentQuizQuestions[0]?.topic;state.categoryExamAttempts[cat]=(state.categoryExamAttempts[cat]||0)+1;if(passed){state.categoryPasses[cat]=true;const cats=getCategories();state.level=Math.min(8,Math.max(state.level,cats.indexOf(cat)+2));}state.quiz={score,pct,miss,date:new Date().toISOString(),topics:currentQuizQuestions.map(q=>q.topic),questionTexts:currentQuizQuestions.map(q=>q.q),passed,category:cat};const rec=currentWeekRecord();rec.quizzes=rec.quizzes||[];rec.quizzes.push({score,pct,miss,date:state.quiz.date,passed,category:cat});save();renderLessons();renderLevels();activeCategoryExam=false;const out=document.getElementById("quiz-result");out.className="result";out.innerHTML=`<h3>Prova de ${escapeHtml(cat)}: ${score}/${currentQuizQuestions.length} (${pct}%)</h3><p>${passed?`Aprovado! A categoria “${escapeHtml(cat)}” foi concluída e a próxima categoria está liberada.`:`Você ainda não passou. São necessários 80%. A próxima categoria continua bloqueada; revise as aulas e tente novamente.`}</p>${miss.length?`<strong>Revise:</strong><ul>${miss.map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>`:""}<button type="button" class="btn" onclick="showPage('aulas');renderLessons()">Voltar às aulas</button><p class="muted">O resultado foi salvo neste navegador.</p>`;return}const previousLevel=state.level;state.quiz={score,pct,miss,date:new Date().toISOString(),topics:currentQuizQuestions.map(q=>q.topic),questionTexts:currentQuizQuestions.map(q=>q.q),passed};if(passed){state.level=Math.min(8,Math.max(state.level,previousLevel+1));state.quiz.lastPassedLevel=state.level;state.quiz.weakTopics=[]}else{state.quiz.weakTopics=miss.slice()}const rec=currentWeekRecord();rec.quizzes=rec.quizzes||[];rec.quizzes.push({score,pct,miss,date:state.quiz.date,passed});save();renderLevels();const out=document.getElementById('quiz-result');out.className='result';out.innerHTML=`<h3>Resultado: ${score}/${currentQuizQuestions.length} (${pct}%)</h3><p>${passed?(previousLevel<8?`Aprovado! O nível ${state.level} está liberado. Parabéns!`:'Aprovado! Você concluiu todos os níveis da trilha.'):'Você precisa de pelo menos 80% para avançar. Vamos gerar uma nova prova com perguntas diferentes apenas dos assuntos que você errou.'}</p>${miss.length?`<strong>Assuntos para revisar:</strong><ul>${miss.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>`:'Excelente: nenhuma questão errada nesta tentativa.'}${!passed?'<button type="button" class="btn" id="retry-quiz">Gerar nova prova de recuperação</button>':''}<p class="muted">O resultado foi salvo neste navegador.</p>`;const retry=document.getElementById('retry-quiz');if(retry)retry.addEventListener('click',()=>buildQuiz(miss));});
+let dharkAiMode='tutor',dharkAiLast='';
+function dharkSetAiMode(mode){
+ if(!['tutor','lesson','grade'].includes(mode))return;
+ dharkAiMode=mode;
+ document.querySelectorAll('.dhark-ai-mode').forEach(el=>{const active=el.dataset.aiMode===mode;el.classList.toggle('active',active);el.classList.toggle('ghost',!active)});
+ document.getElementById('ai-question-label').textContent=mode==='lesson'?'O que você quer aprender?':mode==='grade'?'Qual é a questão ou atividade?':'Qual é sua dúvida?';
+ document.getElementById('ai-context-wrap').hidden=mode!=='grade';
+ document.getElementById('ai-answer-wrap').hidden=mode!=='grade';
+ document.getElementById('ai-submit').textContent=mode==='lesson'?'Criar minha aula →':mode==='grade'?'Avaliar minha resposta →':'Perguntar ao tutor →';
+ document.getElementById('ai-save-lesson').hidden=true;
+ document.getElementById('ai-output').hidden=true;
+ document.getElementById('ai-status').textContent='';
+ if(mode==='lesson')dharkListAiLessons();
+}
+async function dharkAskAi(){
+ const btn=document.getElementById('ai-submit'),status=document.getElementById('ai-status'),output=document.getElementById('ai-output');
+ const question=document.getElementById('ai-question').value.trim(),answer=document.getElementById('ai-answer').value.trim();
+ if(!question||(dharkAiMode==='grade'&&!answer)){status.textContent='Preencha a pergunta e, se for uma correção, sua resposta.';return}
+ btn.disabled=true;status.textContent='Consultando o Gemini...';output.hidden=true;
+ try{
+  const res=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:dharkAiMode,topic:document.getElementById('ai-topic').value,level:document.getElementById('ai-level').value,question,context:document.getElementById('ai-context').value,answer})});
+  const data=await res.json();if(!res.ok)throw Error(data.error||'Não foi possível gerar a resposta.');
+  dharkAiLast=data.text;document.getElementById('ai-output-text').textContent=data.text;
+  document.getElementById('ai-output-title').textContent=dharkAiMode==='lesson'?'Sua aula personalizada':dharkAiMode==='grade'?'Avaliação da resposta':'Orientação do tutor';
+  document.getElementById('ai-save-lesson').hidden=dharkAiMode!=='lesson';
+  output.hidden=false;status.textContent='Concluído. Solicitações restantes hoje: '+data.remainingToday+'.';
+ }catch(e){status.textContent=e.message||'Erro de conexão.'}finally{btn.disabled=false}
+}
+function dharkCopyAi(){if(dharkAiLast&&navigator.clipboard?.writeText)navigator.clipboard.writeText(dharkAiLast).catch(()=>{});}
+async function dharkSaveAiLesson(){
+ if(!dharkAiLast||dharkAiMode!=='lesson')return;
+ const topic=document.getElementById('ai-topic').value.trim()||document.getElementById('ai-question').value.trim().slice(0,80);
+ const key='ai.lesson.'+Date.now();
+ try{const res=await fetch('/api/progress',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({key,value:{topic,text:dharkAiLast,createdAt:new Date().toISOString()}})});if(!res.ok)throw Error('Não foi possível salvar.');document.getElementById('ai-status').textContent='Aula salva na sua conta!';dharkListAiLessons()}catch(e){document.getElementById('ai-status').textContent=e.message}
+}
+async function dharkListAiLessons(){
+ const list=document.getElementById('ai-saved-lessons');if(!list)return;
+ try{const res=await fetch('/api/progress',{credentials:'same-origin',cache:'no-store'});if(!res.ok)return;const data=await res.json();const lessons=(data.progress||[]).filter(x=>x.key?.startsWith('ai.lesson.')).slice(0,30);list.replaceChildren();if(!lessons.length)return;const h=document.createElement('h3');h.textContent='Minhas aulas salvas';list.append(h);lessons.forEach(item=>{const b=document.createElement('button');b.type='button';b.className='btn ghost';b.textContent=item.value?.topic||'Aula personalizada';b.addEventListener('click',()=>{dharkSetAiMode('lesson');dharkAiLast=String(item.value?.text||'');document.getElementById('ai-output-text').textContent=dharkAiLast;document.getElementById('ai-output-title').textContent=b.textContent;document.getElementById('ai-output').hidden=false;document.getElementById('ai-save-lesson').hidden=true});list.append(b)})}catch(e){}
+}
 function tutorHelp(){let topic=document.getElementById("topic").value,q=document.getElementById("tutor-question").value.trim();if(!q){alert("Escreva sua dúvida primeiro.");return}document.getElementById("tutor-output").innerHTML=`<div class="result"><h3>Roteiro para sua dúvida: ${topic}</h3><p><strong>1.</strong> Tente explicar o que você já entendeu em uma frase.</p><p><strong>2.</strong> Monte um exemplo mínimo que reproduza sua dúvida.</p><p><strong>3.</strong> Consulte a referência indicada e compare o exemplo com seu código.</p><p><strong>4.</strong> Peça ao tutor integrado (quando a conexão com IA estiver configurada) uma explicação passo a passo e um exercício parecido sem a resposta pronta.</p><p class="muted">Sua pergunta: “${q.replace(/</g,"&lt;").replace(/>/g,"&gt;")}”</p><button class="btn ghost small" onclick="GenCopy()">Copiar pergunta</button></div>`;window._tutorQuestion=topic+" — "+q}
 function GenCopy(){let text=window._tutorQuestion||"";if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>alert("Pergunta copiada."),()=>prompt("Copie sua pergunta:",text));else prompt("Copie sua pergunta:",text)}
 function exportData(){let blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="meu-progresso-dhark-library.json";a.click();URL.revokeObjectURL(url)}
