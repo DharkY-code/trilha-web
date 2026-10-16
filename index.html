@@ -347,6 +347,18 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 #aulas>.lesson-layout,#pratica>.grid,#dominios>.resource-grid{grid-row:3!important}
 }
 @media(max-width:650px){.main{padding-top:17px}.top{margin-bottom:14px;padding-bottom:13px}.page.active{row-gap:12px!important}#trilha>.dhark-section-banner,#caderno>.dhark-section-banner{padding:16px}}
+
+/* Corrige a causa do vazio: o login forçava .app em grid de tela inteira,
+   centralizando verticalmente o main por causa de margin:auto. */
+html[data-dhark-auth="app"] .app{display:block!important;min-height:100dvh}
+html[data-dhark-auth="app"] .main{display:block;margin:0 auto!important;height:auto;min-height:0;align-self:start}
+@media(min-width:701px){
+.top h1{font-size:clamp(30px,3.3vw,46px)}
+.dhark-section-banner h2{font-size:clamp(21px,2.1vw,29px)}
+#inicio .studio-welcome h2{font-size:clamp(42px,5.6vw,76px)}
+#caderno .notebook-top h2{font-size:clamp(43px,5.8vw,72px)}
+.section-head h2{font-size:22px}
+}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
@@ -928,7 +940,7 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 <script id="dhark-auth-gate-script">
 (async function(){
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
- function showApp(){document.documentElement.dataset.dharkAuth='app';gate.style.display='none';if(app)app.style.setProperty('display','grid','important');}
+ function showApp(){document.documentElement.dataset.dharkAuth='app';gate.style.display='none';if(app)app.style.setProperty('display','block','important');}
  async function checkSession(){
   try{const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(r.ok){const d=await r.json();await dharkLoadAccount();const adminButton=document.getElementById('admin-nav-button');const isAdmin=d.user?.role==='admin';if(adminButton){adminButton.hidden=!isAdmin;adminButton.style.display=isAdmin?'flex':'none';adminButton.setAttribute('aria-hidden',String(!isAdmin));}if(!isAdmin&&location.hash==='#admin'){history.replaceState(null,'',location.pathname+location.search);showPage('inicio',false);}showApp();return true;}}catch(e){}
   document.documentElement.dataset.dharkAuth='login';gate.style.display='grid';if(app)app.style.setProperty('display','none','important');return false;
