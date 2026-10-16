@@ -276,7 +276,7 @@ async function handleApi(request, env) {
   if (path === "/api/me" && request.method === "GET") {
     const auth = await requireUser(request, env);
     if (auth.response) return auth.response;
-    return json({ user: { username: auth.user.username, displayName: auth.user.display_name, area: auth.user.area, role: auth.user.role } });
+    return json({ user: { id: auth.user.id, username: auth.user.username, displayName: auth.user.display_name, area: auth.user.area, role: auth.user.role } });
   }
 
   if (path === "/api/progress" && request.method === "GET") {
