@@ -305,7 +305,8 @@ async function handleApi(request, env) {
     const prompt = "Tema: " + topic + "\\nNível: " + level + "\\nPergunta ou objetivo: " + question + "\\nContexto fornecido: " + context + (mode === "grade" ? "\\nResposta do estudante: " + answer : "");
     // Descobrir modelos realmente habilitados para esta chave quando o padrão
     // retorna 404. Nunca enviar a chave ao navegador nem expor lista de modelos.
-    const preferred = String(env.GEMINI_MODEL || "gemini-2.5-flash").replace("models/", "");
+    const configuredModel = String(env.GEMINI_MODEL || "").replace("models/", "").trim();
+    const preferred = !configuredModel || ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"].includes(configuredModel) ? "gemini-3.5-flash-lite" : configuredModel;
     const payload = JSON.stringify({ systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "lesson" ? 2500 : 1400 } });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
@@ -325,7 +326,7 @@ async function handleApi(request, env) {
         if (listing.ok) {
           const available = await listing.json();
           const models = (available.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent")).map(m => String(m.name || "").replace("models/", ""));
-          const alternatives = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"].filter(m => m !== preferred);
+          const alternatives = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash"].filter(m => m !== preferred);
           const candidate = alternatives.find(m => models.includes(m)) || models.find(m => /^gemini-.*flash/.test(m)) || models.find(m => /^gemini-/.test(m));
           if (candidate && candidate !== preferred) {
             console.log("Gemini model fallback", candidate);
