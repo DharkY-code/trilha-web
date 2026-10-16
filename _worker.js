@@ -369,7 +369,7 @@ async function handleApi(request, env) {
     };
     const prompt = "Tema: " + topic + "\nNível: " + level + "\nPergunta ou objetivo: " + question + "\nContexto fornecido: " + context + (mode === "grade" ? "\nResposta do estudante: " + answer : "");
     // A API de chat completions da Groq mantém o contrato interno {text,sources,mode,remainingToday}.
-    const model = String(env.GROQ_MODEL || "llama-3.3-70b-versatile").trim();
+    const model = String(env.GROQ_MODEL || "llama-3.1-8b-instant").trim();
     const payload = JSON.stringify({
       model,
       messages: [
@@ -384,13 +384,32 @@ async function handleApi(request, env) {
     const timeout = setTimeout(() => controller.abort(), ["track","lesson","assessment"].includes(mode) ? 55000 : 25000);
     let response;
     try {
-      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const invoke = selectedModel => fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: "Bearer " + env.GROQ_API_KEY },
-        body: payload,
+        body: JSON.stringify({ ...JSON.parse(payload), model: selectedModel }),
         signal: controller.signal
       });
+      response = await invoke(model);
+      if (response.status === 404) {
+        // Consultar os modelos realmente disponíveis para esta chave antes de tentar novamente.
+        const modelsResponse = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { authorization: "Bearer " + env.GROQ_API_KEY },
+          signal: controller.signal
+        });
+        if (modelsResponse.ok) {
+          const listing = await modelsResponse.json();
+          const available = new Set((listing.data || []).filter(m => m.active !== false).map(m => m.id));
+          const choices = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "openai/gpt-oss-120b"];
+          const fallback = choices.find(id => id !== model && available.has(id));
+          if (fallback) {
+            console.log("Groq model fallback", fallback);
+            response = await invoke(fallback);
+          }
+        }
+      }
     } catch (error) {
+      console.error("Groq request failed", error?.name || "network_error");
       return json({ error: "Não foi possível conectar à GroqCloud. Tente novamente." }, 502);
     } finally { clearTimeout(timeout); }
     if (!response.ok) {
