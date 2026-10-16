@@ -357,7 +357,7 @@ async function handleApi(request, env) {
         503: "O Gemini está temporariamente indisponível."
       };
       // Retornar só informações de diagnóstico específicas e sanitizadas.
-      const safeDetail = providerMessage.replace(/AIza[0-9A-Za-z_-]+/g, "[chave oculta]").replace(/https?:\\/\\/\\S+/g, "[URL oculta]");
+      const safeDetail = providerMessage.replace(/AIza[0-9A-Za-z_-]+/g, "[chave oculta]").replace(/https?:[^ ]+/g, "[URL oculta]");
       return json({ error: (hints[response.status] || "Falha na comunicação com o Gemini.") + " HTTP " + response.status + (providerCode ? " (" + providerCode + ")" : "") + (safeDetail ? " — " + safeDetail : ""), providerStatus: response.status, providerCode }, response.status === 429 ? 429 : 502);
     }
     const data = await response.json();
