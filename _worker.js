@@ -282,7 +282,7 @@ async function handleApi(request, env) {
     if (size > 18000) return json({ error: "Mensagem muito grande." }, 413);
     const b = await readJson(request);
     const mode = String(b?.mode || "");
-    if (!["tutor", "lesson", "grade"].includes(mode)) return json({ error: "Operação inválida." }, 400);
+    if (!["tutor", "lesson", "grade", "track"].includes(mode)) return json({ error: "Operação inválida." }, 400);
     const question = String(b?.question || "").trim().slice(0, 5000);
     const topic = String(b?.topic || "").trim().slice(0, 180);
     const level = String(b?.level || "iniciante").trim().slice(0, 40);
@@ -300,6 +300,7 @@ async function handleApi(request, env) {
     const instructions = {
       tutor: "Você é o tutor da Dhark Library. Responda em português brasileiro com didática, exemplos concretos e uma sugestão de exercício. Ajude a pessoa a pensar; não invente fatos. Se não tiver certeza, diga.",
       lesson: "Você é designer instrucional da Dhark Library. Crie uma aula original em português brasileiro sobre o tema solicitado, para o nível indicado. Use os títulos: Objetivo, Pré-requisitos, Explicação passo a passo, Exemplos, Atividade prática, Questões de revisão (3 perguntas), Próximos passos. O tema pode ser qualquer assunto educacional apropriado. Não afirme que a aula foi verificada por especialista.",
+      track: "Você cria trilhas educacionais personalizadas para qualquer área de estudo. Responda SOMENTE com JSON válido, sem markdown, no formato {\\"title\\":\\"...\\",\\"modules\\":[{\\"title\\":\\"...\\",\\"description\\":\\"...\\",\\"lessons\\":[{\\"title\\":\\"...\\",\\"content\\":\\"...\\",\\"exercise\\":\\"...\\"}]}]}. Crie 4 módulos em ordem pedagógica, cada um com 3 aulas completas e originais, explicações em português brasileiro de 3 a 6 parágrafos por aula e um exercício. Personalize especificamente para o objetivo e dificuldades descritos, sem inserir programação se não for solicitada. Não use HTML. Não invente fontes.",
       grade: "Você é avaliador formativo da Dhark Library. Compare a pergunta e o contexto com a resposta do estudante. Retorne: Veredito (correta/parcial/incorreta/incerta), Justificativa, Pontos fortes, O que melhorar, Resposta-modelo. Considere respostas alternativas válidas e não afirme certeza quando a questão for ambígua. Não altere notas ou progresso."
     };
     const prompt = "Tema: " + topic + "\\nNível: " + level + "\\nPergunta ou objetivo: " + question + "\\nContexto fornecido: " + context + (mode === "grade" ? "\\nResposta do estudante: " + answer : "");
@@ -307,7 +308,7 @@ async function handleApi(request, env) {
     // retorna 404. Nunca enviar a chave ao navegador nem expor lista de modelos.
     const configuredModel = String(env.GEMINI_MODEL || "").replace("models/", "").trim();
     const preferred = !configuredModel || ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"].includes(configuredModel) ? "gemini-3.5-flash-lite" : configuredModel;
-    const payload = JSON.stringify({ systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "lesson" ? 2500 : 1400 } });
+    const payload = JSON.stringify({ systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "track" ? 8000 : mode === "lesson" ? 2500 : 1400 } });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
     let response;
@@ -368,6 +369,13 @@ async function handleApi(request, env) {
     const text = (data.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("\\n").trim();
     if (!text) return json({ error: "O Gemini não retornou conteúdo para esta solicitação." }, 502);
     return json({ text: text.slice(0, 22000), mode, remainingToday: Math.max(0, 30 - Number(quota.record_json)) });
+  }
+
+  if (path === "/api/study-profile" && request.method === "GET") {
+    const auth = await requireUser(request, env);
+    if (auth.response) return auth.response;
+    const profile = await env.DB.prepare("SELECT learning_goal, level FROM user_profiles WHERE user_id=?").bind(auth.user.id).first();
+    return json({ role: auth.user.role, area: auth.user.area, goal: profile?.learning_goal || "", level: profile?.level || "basico" });
   }
 
   if (path === "/api/me" && request.method === "GET") {
