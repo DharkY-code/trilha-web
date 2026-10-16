@@ -261,6 +261,72 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 @media(max-width:1050px){#inicio.page.active{grid-template-columns:minmax(0,1fr)}#inicio .dhark-home-intro,#inicio .dhark-home-metrics{grid-column:1}#inicio .dhark-home-history{grid-column:1;grid-row:3}#inicio .dhark-home-workspace{grid-column:1;grid-row:4}#inicio .dhark-home-journey{grid-column:1;grid-row:5}#inicio .dhark-home-metrics .stats{grid-template-columns:repeat(2,minmax(0,1fr))}#trilha>#all-levels{grid-column:1/-1!important;grid-row:3!important}#trilha>.card:last-child{grid-column:1/-1!important;grid-row:4!important;position:static}#caderno>.grid{grid-template-columns:minmax(0,1fr)!important}}
 @media(max-width:650px){#inicio .dhark-home-intro{min-height:0;flex-direction:column;align-items:flex-start;gap:23px;padding:15px 0 25px}#inicio .dhark-home-intro h2{font-size:clamp(40px,11vw,57px)}#inicio .dhark-home-intro .btn{width:100%}#inicio .dhark-home-metrics .stats{grid-template-columns:repeat(2,minmax(0,1fr))}#inicio .dhark-home-metrics .stats .card{min-height:125px;padding:15px}#inicio .dhark-home-workspace .dashboard>.card:not(.hero){padding:19px}#trilha>.dhark-section-banner+.card,#caderno>.dhark-section-banner+.card{padding:18px}}
 @media(max-width:360px){#inicio .dhark-home-metrics .stats{grid-template-columns:minmax(0,1fr)}}
+
+/* V3: visão geral inteiramente editorial, sem hero/dashboard roxo */
+#inicio.page.active{display:flex!important;flex-direction:column;gap:0;align-items:stretch}
+#inicio .studio-welcome{width:100%;padding:clamp(30px,5vw,74px) clamp(24px,5vw,75px);background:#f0eaf5;border:1px solid #e3d8ea;border-radius:6px 60px 6px 60px;min-height:360px;position:relative;overflow:hidden}
+#inicio .studio-welcome:after{content:"✳";position:absolute;right:5%;top:6%;font-size:clamp(100px,19vw,250px);color:#dfd0e9;line-height:1;pointer-events:none}
+#inicio .studio-welcome-top{display:flex;gap:20px;justify-content:space-between;align-items:center;position:relative;z-index:1}
+#inicio .studio-kicker,#inicio .studio-date,.studio-index{font-size:11px;font-weight:850;letter-spacing:.17em;color:#846396}
+#inicio .studio-welcome h2{position:relative;z-index:1;font-size:clamp(44px,6.7vw,90px);letter-spacing:-.075em;line-height:1.01;font-weight:850;color:#2c1c3c;margin:32px 0 15px}
+#inicio .studio-welcome h2 i{font-style:normal;color:#9068ad}
+#inicio .studio-welcome p{position:relative;z-index:1;color:#776b82;font-size:15px;margin:0 0 28px}
+#inicio .studio-shortcuts{display:flex;flex-wrap:wrap;gap:10px;position:relative;z-index:1}
+#inicio .studio-shortcut{display:inline-flex;align-items:center;gap:12px;border:1px solid #d7c7e4;border-radius:100px;background:#fff;color:#53336e;padding:12px 19px;font-weight:800;transition:transform .2s,background .2s}
+#inicio .studio-shortcut:hover{background:#e6d7f1;transform:translateY(-3px)}
+#inicio .studio-overview,#inicio .studio-week,#inicio .studio-history,#inicio .studio-path{width:100%;min-width:0;padding-top:36px}
+#inicio .studio-heading{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:0 0 15px;border-bottom:1px solid #dfd5e6;margin-bottom:20px}
+#inicio .studio-heading h3{font-size:clamp(21px,2.5vw,29px);letter-spacing:-.045em;color:#34243f;margin:0}
+#inicio .studio-overview .stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto;gap:0;margin:0;border-top:1px solid #e1d8e7;border-bottom:1px solid #e1d8e7}
+#inicio .studio-overview .stats .card{display:flex;flex-direction:column;justify-content:center;min-height:145px;padding:20px 22px;border:0;border-right:1px solid #e1d8e7;border-radius:0;background:transparent;box-shadow:none}
+#inicio .studio-overview .stats .card:last-child{border-right:0}
+#inicio .studio-overview .stats .card:before{display:none}
+#inicio .studio-overview .stat-value{font-size:clamp(29px,3vw,43px);margin:10px 0}
+#inicio .studio-week .dashboard{display:block!important}
+#inicio .studio-week .hero{display:none!important}
+#inicio .studio-week .dashboard>.card:not(.hero){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(220px,.65fr);gap:10px 32px;align-items:center;padding:30px;border:1px solid #e7ddeb;border-radius:20px;background:#fff}
+#inicio .studio-week .dashboard>.card:not(.hero)>.row,#inicio .studio-week .dashboard>.card:not(.hero)>.progress,#inicio .studio-week .dashboard>.card:not(.hero)>p{grid-column:1}
+#inicio .studio-week .dashboard>.card:not(.hero)>.field{grid-column:2;grid-row:1/3;margin:0}
+#inicio .studio-week .dashboard>.card:not(.hero)>.btn{grid-column:2;grid-row:3;justify-self:start}
+#inicio .studio-history>.section-head,#inicio .studio-path>.section-head{display:none}
+#inicio .studio-history #study-timeline-card{width:100%;min-width:0;grid-column:auto}
+#inicio .studio-path #home-levels{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:15px}
+#inicio .studio-path .footer{margin-top:18px}
+/* Caderno: ambiente de escrita com estante e folha pautada */
+#caderno.page.active{display:block!important}
+#caderno .notebook-top{padding:24px 0 30px;border-bottom:1px solid #e2d7e9;margin-bottom:23px}
+#caderno .notebook-top h2{font-size:clamp(48px,7vw,85px);font-weight:850;line-height:1.05;letter-spacing:-.075em;color:#30203f;margin:12px 0}
+#caderno .notebook-top h2 span{color:#b18acc}
+#caderno .notebook-top p{color:#81738d;font-size:15px;margin:0}
+#caderno .notebook-workspace{width:100%;min-width:0}
+#caderno .notebook-workspace>.grid{display:grid!important;grid-template-columns:minmax(230px,.65fr) minmax(0,1.65fr)!important;align-items:start;gap:20px;margin:0!important}
+#caderno .notebook-workspace>.grid>.card{min-width:0;align-self:start;height:auto;border-radius:18px}
+#caderno .notebook-workspace>.grid>.card:first-child{background:#f0e9f5;border:1px solid #e0d3e9;box-shadow:none;position:sticky;top:24px}
+#caderno .notebook-workspace>.grid>.card:first-child h3{font-size:18px}
+#caderno #notebook-list{display:flex;flex-direction:column;gap:9px}
+#caderno #notebook-list .lesson-item{background:#fff;border:1px solid #e3d7ea;border-radius:12px}
+#caderno .notebook-workspace>.grid>.card:last-child{padding:0;overflow:hidden;border:1px solid #e1d7e8;background:#fff}
+#caderno .notebook-workspace>.grid>.card:last-child>.row:first-child{background:#f8f4fb;border-bottom:1px solid #e6dce9;padding:19px 27px;margin:0}
+#caderno .notebook-workspace>.grid>.card:last-child>.field{padding:0 27px;margin:18px 0}
+#caderno #note-title{font-size:24px;font-weight:750;letter-spacing:-.035em;border:0;border-bottom:1px solid #e5dbe9;border-radius:0;padding:12px 0;background:transparent}
+#caderno #note-body{min-height:430px;resize:vertical;font-size:16px;line-height:32px;padding:10px 15px 15px 35px;border:1px solid #e9e0ec;border-radius:8px;background:repeating-linear-gradient(to bottom,#fff 0,#fff 31px,#e9e1ed 32px);background-attachment:local;color:#30233c;tab-size:2}
+#caderno #note-body:focus{outline:2px solid #b99ace;outline-offset:2px}
+#caderno .notebook-workspace>.grid>.card:last-child>.row:not(:first-child){padding:0 27px;gap:10px}
+#caderno .notebook-workspace>.grid>.card:last-child>h3{padding:0 27px}
+#caderno #notes-list{margin:0 27px 27px}
+#caderno .notebook-workspace .field label{font-weight:800;color:#705a7e}
+@media(max-width:1050px){#inicio .studio-overview .stats{grid-template-columns:repeat(2,minmax(0,1fr))}#inicio .studio-overview .stats .card:nth-child(2){border-right:0}#inicio .studio-overview .stats .card:nth-child(-n+2){border-bottom:1px solid #e1d8e7}#caderno .notebook-workspace>.grid{grid-template-columns:minmax(0,1fr)!important}#caderno .notebook-workspace>.grid>.card:first-child{position:static}}
+@media(max-width:650px){#inicio .studio-welcome{border-radius:5px 35px 5px 35px;padding:28px 22px;min-height:0}#inicio .studio-welcome h2{font-size:clamp(43px,11vw,62px)}#inicio .studio-welcome:after{font-size:120px;right:-20px;top:10%}#inicio .studio-date{display:none}#inicio .studio-shortcut{width:100%;justify-content:flex-start}#inicio .studio-heading{display:block}#inicio .studio-heading h3{margin-top:5px}#inicio .studio-overview .stats .card{padding:16px 12px;min-height:120px}#inicio .studio-week .dashboard>.card:not(.hero){display:block!important;padding:20px}#inicio .studio-week .dashboard>.card:not(.hero)>.field{margin:15px 0}#inicio .studio-path #home-levels{grid-template-columns:minmax(0,1fr)!important}#caderno .notebook-top h2{font-size:52px}#caderno .notebook-workspace>.grid>.card:last-child>.field{padding:0 15px}#caderno .notebook-workspace>.grid>.card:last-child>.row:not(:first-child),#caderno .notebook-workspace>.grid>.card:last-child>h3{padding:0 15px}#caderno .notebook-workspace>.grid>.card:last-child>.row:first-child{padding:17px 15px}#caderno #notes-list{margin:0 15px 20px}#caderno #note-body{min-height:350px;padding-left:15px}}
+/* Dock: rolagem explícita por controles, sem esconder as últimas abas */
+.side{padding-right:12px!important}
+.nav{scrollbar-width:thin!important;scrollbar-color:#ad8cc5 #3b284b;scroll-behavior:smooth}
+.nav::-webkit-scrollbar{display:block!important;height:6px}
+.nav::-webkit-scrollbar-thumb{background:#ad8cc5;border-radius:9px}
+.nav::-webkit-scrollbar-track{background:#3b284b;border-radius:9px}
+.dhark-dock-arrows{display:flex;flex:0 0 auto;gap:4px}
+.dhark-dock-arrows button{display:grid;place-items:center;width:34px;height:39px;border-radius:10px;background:#5a3c73;color:white;border:1px solid #ffffff26;font-size:22px;line-height:1}
+.dhark-dock-arrows button:hover{background:#79569a}
+@media(max-width:650px){.dhark-dock-arrows button{width:29px;height:42px;font-size:19px}}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
@@ -314,30 +380,35 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
     <button data-page="admin" id="admin-nav-button" hidden>🛡️ <span>Administração</span></button>
     <button type="button" id="logout-nav-button">↪ <span>Sair da conta</span></button>
   </nav>
+  <div class="dhark-dock-arrows" aria-label="Rolar abas"><button type="button" onclick="document.querySelector('.nav').scrollBy({left:-300,behavior:'smooth'})" aria-label="Ver abas anteriores">‹</button><button type="button" onclick="document.querySelector('.nav').scrollBy({left:300,behavior:'smooth'})" aria-label="Ver próximas abas">›</button></div>
   <div class="side-note"><strong>Regra da trilha</strong>Avançar depende de demonstrar domínio, não só marcar aulas como concluídas.</div>
 </aside>
 <main class="main">
 <header class="top"><div><div class="eyebrow">Seu espaço de aprendizagem</div><h1 id="page-title">Bom dia. Vamos construir?</h1><p class="sub" id="page-sub">Pequenos passos consistentes viram projetos reais.</p></div><div class="pill" id="goal-pill">Meta: 7 h/semana</div></header>
 
 <section class="page active" id="inicio">
-<div class="dhark-home-intro"><div><span class="eyebrow">DHARK LIBRARY · SEU ESPAÇO</span><h2>Seu aprendizado,<br><em>no seu ritmo.</em></h2><p>Um lugar para continuar aprendendo, acompanhar suas conquistas e construir novos projetos.</p></div><button class="btn" onclick="showPage('trilha')">Explorar minha trilha <span aria-hidden="true">↗</span></button></div>
-<div class="dhark-home-metrics"><div class="grid stats">
+<div class="studio-welcome"><div class="studio-welcome-top"><span class="studio-kicker">ESPAÇO DE APRENDIZAGEM <span aria-hidden="true">✳</span></span><span class="studio-date">DHARK LIBRARY</span></div><h2>O que vamos<br><i>aprender hoje?</i></h2><p>Seu próximo capítulo começa aqui. Escolha por onde continuar.</p><div class="studio-shortcuts"><button onclick="showPage('trilha')" class="studio-shortcut">↗ <span>Continuar estudando</span></button><button onclick="showPage('caderno')" class="studio-shortcut">✎ <span>Abrir meu caderno</span></button><button onclick="showPage('pratica')" class="studio-shortcut">⌘ <span>Ir para prática</span></button></div></div>
+<div class="studio-overview"><div class="studio-heading"><span class="studio-index">01 / PANORAMA</span><h3>Seu progresso em números</h3></div><div class="grid stats">
  <div class="card"><div class="stat-label">Horas registradas</div><div class="stat-value" id="hours-stat">0 h</div><div class="stat-foot">Seu tempo de estudo</div></div>
  <div class="card"><div class="stat-label">Meta semanal</div><div class="stat-value" id="goal-stat">7 h</div><div class="stat-foot" id="remaining-stat">7 h para cumprir a meta</div></div>
  <div class="card"><div class="stat-label">Aulas concluídas</div><div class="stat-value" id="lessons-stat">0</div><div class="stat-foot">Marque ao terminar e praticar</div></div>
  <div class="card"><div class="stat-label">Nível atual</div><div class="stat-value" id="level-stat">Nível 1</div><div class="stat-foot">Progressão por competência</div></div>
 </div>
 </div>
-<div class="dhark-home-workspace"><div class="grid dashboard">
+<div class="dhark-home-workspace"></div>
+<div class="studio-week"><div class="studio-heading"><span class="studio-index">02 / ROTINA</span><h3>Organize sua semana</h3></div><div class="grid dashboard">
  <div class="card hero"><div class="eyebrow">Seu próximo passo</div><h2>Construa a base. Depois, construa coisas incríveis.</h2><p>Comece pela estrutura da web e avance com projetos pequenos, exercícios e revisões honestas.</p><button class="btn light" onclick="showPage('trilha')">Continuar minha trilha →</button></div>
  <div class="card"><div class="row"><h2 style="font-size:18px;margin:0">Meta da semana</h2><span class="tag" id="weekly-tag">0%</span></div><div class="progress" style="margin-top:18px"><span id="weekly-bar" style="width:0%"></span></div><p class="muted" id="weekly-copy">Registre suas sessões para acompanhar a meta.</p><div class="field"><label for="quick-hours">Registrar sessão de estudo (horas)</label><input type="number" id="quick-hours" min="0.25" max="12" step="0.25" value="1"></div><button class="btn" onclick="logHours()">+ Registrar estudo</button></div>
 </div>
 </div>
-<div class="dhark-home-history"><div class="section-head"><div><h2>Linha do tempo dos estudos</h2><p>Veja suas horas e aulas registradas nas últimas semanas.</p></div></div>
+<div class="dhark-home-history"></div>
+<div class="studio-history"><div class="studio-heading"><span class="studio-index">03 / HISTÓRICO</span><h3>Sua constância</h3></div><div class="section-head"><div><h2>Linha do tempo dos estudos</h2><p>Veja suas horas e aulas registradas nas últimas semanas.</p></div></div>
 <div class="card" id="study-timeline-card"><div class="row"><div><h3 style="margin:0">Horas por semana</h3><p class="muted" style="margin:4px 0 0">O gráfico é atualizado quando você registra estudo ou conclui aulas.</p></div><span class="tag" id="timeline-total">0 h no histórico</span></div><div id="weekly-chart" class="weekly-chart" aria-label="Gráfico de horas estudadas por semana"></div><h3 style="margin:22px 0 8px">Semanas anteriores</h3><div id="weekly-history" class="weekly-history"></div><p class="muted" style="font-size:12px;margin-bottom:0">O histórico começa a ser registrado a partir desta atualização. Semanas antigas sem registros não podem ser reconstruídas.</p></div>
 </div>
-<div class="dhark-home-journey"><div class="section-head"><div><h2>Trilha de aprendizagem</h2><p>Oito níveis, do zero ao projeto publicado.</p></div><button class="btn ghost small" onclick="showPage('trilha')">Ver trilha completa</button></div>
+<div class="dhark-home-journey"></div>
+<div class="studio-path"><div class="studio-heading"><span class="studio-index">04 / JORNADA</span><h3>Próximos capítulos</h3></div><div class="section-head"><div><h2>Trilha de aprendizagem</h2><p>Oito níveis, do zero ao projeto publicado.</p></div><button class="btn ghost small" onclick="showPage('trilha')">Ver trilha completa</button></div>
 <div class="grid levels" id="home-levels"></div>
+</div>
 </div>
 </section>
 
@@ -365,12 +436,12 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 </section>
 
 <section class="page" id="caderno">
-<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">✎</span><div><span class="dhark-section-kicker">DHARK / CADERNO</span><h2>Seu espaço de ideias</h2><p>Organize descobertas, anotações e referências.</p></div></div>
-<div class="card"><div class="eyebrow">Caderno digital</div><h2>Suas anotações de estudo</h2><p class="muted">Crie cadernos por assunto e salve suas próprias anotações. Elas ficam neste navegador e dispositivo; exporte uma cópia para não perder seus registros.</p></div>
-<div class="grid" style="grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr);gap:16px;margin-top:16px">
+<div class="notebook-top"><span class="studio-index">SEU ATELIÊ DE ESCRITA</span><h2>Meu caderno<span>.</span></h2><p>Um lugar para pensar, escrever e guardar o que você aprende.</p></div>
+<div class="notebook-workspace"><div class="grid" style="grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr);gap:16px;margin-top:16px">
  <div class="card"><h3 style="margin-top:0">Criar um caderno</h3><div class="field"><label for="notebook-name">Nome do caderno</label><input id="notebook-name" placeholder="Ex.: HTML semântico, CSS, JavaScript"></div><button class="btn" onclick="createNotebook()">+ Criar caderno</button><h3 style="margin-top:24px">Meus cadernos</h3><div id="notebook-list" class="lesson-list"></div></div>
  <div class="card"><div class="row"><h3 id="note-editor-title" style="margin-top:0">Nova anotação</h3><span class="tag" id="note-save-status">Salvo localmente</span></div><div class="field"><label for="note-title">Título da anotação</label><input id="note-title" placeholder="Ex.: Diferença entre main e section"></div><div class="field"><label for="note-body">Anotação</label><textarea id="note-body" rows="12" placeholder="Escreva aqui suas explicações, exemplos de código, dúvidas e resumos..."></textarea></div><div class="row" style="flex-wrap:wrap"><button class="btn" onclick="saveNote()">Salvar anotação</button><button class="btn ghost" onclick="newNote()">Nova anotação</button><button class="btn ghost" onclick="exportNotebooks()">Exportar cadernos</button></div><h3 style="margin-top:24px">Anotações deste caderno</h3><div id="notes-list" class="lesson-list"></div></div>
-</div></section>
+</div></div>
+</section>
 <section class="page" id="pratica">
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">⌘</span><div><span class="dhark-section-kicker">DHARK / PRATICA</span><h2>Estúdio de prática</h2><p>Aprenda construindo e experimentando.</p></div></div>
 <div class="card"><div class="eyebrow">Laboratório de prática</div><h2>Problemas para resolver</h2><p class="muted">Tente antes de consultar uma solução. Escreva seu raciocínio e confira os critérios de correção.</p></div>
