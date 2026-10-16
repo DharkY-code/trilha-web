@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dhark Library">
 <title>Dhark Library — Sua biblioteca de desenvolvimento</title>
+<style id="dhark-auth-first-paint">#auth-gate{display:none!important}html[data-dhark-auth="login"] #auth-gate{display:grid!important}</style>
 <script id="dhark-account-storage-isolation">
 (function(){
  const keys=new Set(['trilhaWebState','dharkLibraryLastSaved','dharkManuCompleted','dharkLibraryActivePage','trilhaWebThemeColor','dharkLibraryNotebooks']);
@@ -677,10 +678,10 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 <script id="dhark-auth-gate-script">
 (async function(){
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
- function showApp(){gate.style.display='none';if(app)app.style.setProperty('display','grid','important');}
+ function showApp(){document.documentElement.dataset.dharkAuth='app';gate.style.display='none';if(app)app.style.setProperty('display','grid','important');}
  async function checkSession(){
   try{const r=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});if(r.ok){const d=await r.json();await dharkLoadAccount();const adminButton=document.getElementById('admin-nav-button');const isAdmin=d.user?.role==='admin';if(adminButton){adminButton.hidden=!isAdmin;adminButton.style.display=isAdmin?'flex':'none';adminButton.setAttribute('aria-hidden',String(!isAdmin));}if(!isAdmin&&location.hash==='#admin'){history.replaceState(null,'',location.pathname+location.search);showPage('inicio',false);}showApp();return true;}}catch(e){}
-  gate.style.display='grid';if(app)app.style.setProperty('display','none','important');return false;
+  document.documentElement.dataset.dharkAuth='login';gate.style.display='grid';if(app)app.style.setProperty('display','none','important');return false;
  }
  form.addEventListener('submit',async e=>{
   e.preventDefault();msg.textContent='Verificando acesso…';
