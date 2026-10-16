@@ -600,13 +600,16 @@ body.dhark-personal-account .side-note{display:none}
     <button data-page="caderno"><span class="nav-glyph">▤</span><span>Meu caderno</span></button>
     <button data-page="dominios"><span class="nav-glyph">↗</span><span>Publicação e domínios</span></button>
     <div class="nav-group-label">SUA CONTA</div>
+    <button data-page="perfil"><span class="nav-glyph">◉</span><span>Perfil</span></button>
     <button data-page="config"><span class="nav-glyph">⚙</span><span>Configurações</span></button>
     <button data-page="admin" id="admin-nav-button" hidden><span class="nav-glyph">♢</span><span>Administração</span></button>
     <button type="button" id="logout-nav-button"><span class="nav-glyph">↪</span><span>Sair da conta</span></button>
   </nav>
+  <button type="button" id="dhark-more-toggle" aria-expanded="false" aria-controls="dhark-more-menu" onclick="dharkToggleMoreMenu()">☷ <span>Mais</span></button>
   <div class="dhark-dock-arrows" aria-label="Rolar abas"><button type="button" onclick="document.querySelector('.nav').scrollBy({left:-300,behavior:'smooth'})" aria-label="Ver abas anteriores">‹</button><button type="button" onclick="document.querySelector('.nav').scrollBy({left:300,behavior:'smooth'})" aria-label="Ver próximas abas">›</button></div>
   <div class="side-note"><strong>Regra da trilha</strong>Avançar depende de demonstrar domínio, não só marcar aulas como concluídas.</div>
 </aside>
+<div id="dhark-more-menu" hidden><div class="dhark-more-head"><strong>Mais opções</strong><button type="button" onclick="dharkToggleMoreMenu(false)" aria-label="Fechar menu">✕</button></div><div id="dhark-more-links"></div></div>
 <main class="main">
 <header class="top"><div><div class="eyebrow">Seu espaço de aprendizagem</div><h1 id="page-title">Bom dia. Vamos construir?</h1><p class="sub" id="page-sub">Pequenos passos consistentes viram projetos reais.</p></div><div class="pill" id="goal-pill">Meta: 4 h/semana</div></header>
 
@@ -729,6 +732,14 @@ ORDER BY ano DESC;</code></pre></details></div>
 </div>
 </section>
 
+<section class="page" id="perfil">
+<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">◉</span><div><span class="dhark-section-kicker">MINHA CONTA</span><h2>Meu perfil</h2><p>Seu espaço pessoal na Dhark Library.</p></div></div>
+<div class="card dhark-profile-card"><div class="dhark-profile-header"><div class="dhark-avatar" id="dhark-profile-avatar" aria-label="Foto de perfil">◉</div><div><h2 id="dhark-profile-display">Meu perfil</h2><p class="muted" id="dhark-profile-handle"></p></div></div>
+<div class="field"><label for="dhark-profile-photo">Foto de perfil</label><input type="file" id="dhark-profile-photo" accept="image/png,image/jpeg,image/webp" onchange="dharkPreviewProfilePhoto(this)"><p class="muted">Imagem quadrada ou retrato. A foto será otimizada antes de salvar.</p></div>
+<div class="field"><label for="dhark-profile-name">Nome de exibição</label><input type="text" id="dhark-profile-name" maxlength="60" placeholder="Como deseja ser chamado?"></div>
+<div class="field"><label for="dhark-profile-bio">Sobre mim</label><textarea id="dhark-profile-bio" rows="4" maxlength="300" placeholder="Conte um pouco sobre você e seus objetivos de estudo."></textarea><p class="muted">Até 300 caracteres.</p></div>
+<button class="btn" type="button" id="dhark-profile-save" onclick="dharkSaveProfile()">Salvar perfil</button><p id="dhark-profile-status" role="status" aria-live="polite"></p>
+</div></section>
 <section class="page" id="config">
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">⚙</span><div><span class="dhark-section-kicker">DHARK / CONFIG</span><h2>Seu ambiente</h2><p>Personalize a plataforma e sua rotina.</p></div></div>
 <div class="card"><div class="eyebrow">Personalize seu ritmo</div><h2>Configurações de estudo</h2><p class="muted">A meta global é 4 horas por semana para todas as contas.</p>
@@ -967,7 +978,7 @@ function renderManuLessons(){const f=document.getElementById("manu-filter");if(!
 function toggleManuLesson(id,checked){let done=[];try{done=JSON.parse(localStorage.getItem("dharkManuCompleted")||"[]")}catch(e){}done=done.filter(x=>x!==id);if(checked)done.push(id);localStorage.setItem("dharkManuCompleted",JSON.stringify(done));renderManuLessons()}
 function openManuLesson(id){const l=manuLessons.find(x=>x.id===id);if(!l)return;document.getElementById("manu-viewer").innerHTML='<div class="row"><span class="tag">'+escapeHtml(l.category)+'</span><span class="tag">'+l.minutes+' min</span></div><h2>'+escapeHtml(l.title)+'</h2><p class="muted">'+escapeHtml(l.subtitle)+'</p><div class="lesson-content">'+l.content+'</div><div class="source"><a href="'+l.url+'" target="_blank" rel="noopener">Fonte oficial / material de referência ↗</a></div><h3>Atividade</h3><p>'+escapeHtml(l.task)+'</p><div class="field"><label for="manu-answer">Sua resposta</label><textarea id="manu-answer" rows="4" placeholder="Escreva sua resposta aqui..."></textarea></div><button class="btn" onclick="checkManuAnswer(\''+l.id+'\')">Conferir resposta</button><div id="manu-feedback" aria-live="polite"></div>'}
 function checkManuAnswer(id){const l=manuLessons.find(x=>x.id===id),a=(document.getElementById("manu-answer").value||"").toLowerCase(),good=(l.keywords||[]).some(k=>a.includes(k.toLowerCase()));document.getElementById("manu-feedback").innerHTML=a.trim().length<3?'<div class="notice">Escreva sua resposta antes de conferir.</div>':good?'<div class="result"><strong>Boa! Você mencionou uma ideia esperada.</strong><p>Compare sua resposta com a explicação e melhore a justificativa.</p></div>':'<div class="notice">Revise a aula e tente explicar o conceito com suas palavras. Esta conferência automática é apenas uma orientação.</div>'}
-function showPage(id,scroll=true){if(document.body.classList.contains('dhark-personal-account')){if(id==='inicio'||id==='personal-dashboard')id='personal-dashboard';else if(id==='pratica')id='personal-practice';else if(id==='prova')id='personal-exam';else if(id==='trilha'||!['personal-dashboard','minha-trilha-ia','caderno','tutor','config','personal-practice','personal-exam'].includes(id))id='minha-trilha-ia';if(id==='personal-practice'||id==='personal-exam')dharkRenderPersonalAssessments();if(id==='personal-dashboard')dharkRenderPersonalDashboard()}if(!document.getElementById(id))id='inicio';document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id||(id==="minha-trilha-ia"&&b.dataset.page==="trilha")||(id==="personal-practice"&&b.dataset.page==="pratica")||(id==="personal-exam"&&b.dataset.page==="prova")));const titles={'personal-dashboard':['Visão geral','Acompanhe seu progresso e continue aprendendo.'],'personal-practice':['Prática personalizada','Atividades da sua própria trilha.'],'personal-exam':['Prova personalizada','Revisão do conteúdo que você está estudando.'],'minha-trilha-ia':['Minha trilha personalizada','Aulas criadas para seu objetivo de estudo.'],inicio:["Bom dia. Vamos construir?","Pequenos passos consistentes viram projetos reais."],trilha:["Sua trilha de aprendizagem","O caminho do primeiro arquivo ao site publicado."],aulas:["Aulas por trilha","Estude cada assunto na categoria correta."],bruno:["Bruno · Programação","A trilha técnica, com progressão por categoria."],manu:["Manu · Vestibulares","Redação prioritária, matérias e prática sem bloqueios."],caderno:["Meu caderno digital","Guarde resumos, exemplos e dúvidas por assunto."],pratica:["Hora de praticar","Aprender programação exige escrever e testar código."],prova:["Revisão semanal","Critérios claros, erros identificados e revisão direcionada."],tutor:["Tutor de estudo","Prepare sua dúvida e defina o próximo passo."],dominios:["Seu projeto no ar","Domínio e hospedagem quando chegar a hora."],config:["Configurações","Adapte o plano à sua rotina real."],admin:["Administração","Gere convites e gerencie contas sem sair da biblioteca."]};const pageHeading=titles[id]||titles.inicio;document.getElementById("page-title").textContent=pageHeading[0];document.getElementById("page-sub").textContent=pageHeading[1];try{localStorage.setItem('dharkLibraryActivePage',id)}catch(e){}if(location.hash!=='#'+id)history.replaceState(null,'','#'+id);if(scroll){window.scrollTo({top:0,behavior:"instant"});requestAnimationFrame(()=>window.scrollTo(0,0))}}
+function showPage(id,scroll=true){if(document.body.classList.contains('dhark-personal-account')){if(id==='inicio'||id==='personal-dashboard')id='personal-dashboard';else if(id==='pratica')id='personal-practice';else if(id==='prova')id='personal-exam';else if(id==='trilha'||!['personal-dashboard','minha-trilha-ia','caderno','tutor','config','perfil','personal-practice','personal-exam'].includes(id))id='minha-trilha-ia';if(id==='personal-practice'||id==='personal-exam')dharkRenderPersonalAssessments();if(id==='personal-dashboard')dharkRenderPersonalDashboard()}if(!document.getElementById(id))id='inicio';document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id||(id==="minha-trilha-ia"&&b.dataset.page==="trilha")||(id==="personal-practice"&&b.dataset.page==="pratica")||(id==="personal-exam"&&b.dataset.page==="prova")));const titles={'personal-dashboard':['Visão geral','Acompanhe seu progresso e continue aprendendo.'],'personal-practice':['Prática personalizada','Atividades da sua própria trilha.'],'personal-exam':['Prova personalizada','Revisão do conteúdo que você está estudando.'],'minha-trilha-ia':['Minha trilha personalizada','Aulas criadas para seu objetivo de estudo.'],inicio:["Bom dia. Vamos construir?","Pequenos passos consistentes viram projetos reais."],trilha:["Sua trilha de aprendizagem","O caminho do primeiro arquivo ao site publicado."],aulas:["Aulas por trilha","Estude cada assunto na categoria correta."],bruno:["Bruno · Programação","A trilha técnica, com progressão por categoria."],manu:["Manu · Vestibulares","Redação prioritária, matérias e prática sem bloqueios."],caderno:["Meu caderno digital","Guarde resumos, exemplos e dúvidas por assunto."],pratica:["Hora de praticar","Aprender programação exige escrever e testar código."],prova:["Revisão semanal","Critérios claros, erros identificados e revisão direcionada."],tutor:["Tutor de estudo","Prepare sua dúvida e defina o próximo passo."],dominios:["Seu projeto no ar","Domínio e hospedagem quando chegar a hora."],perfil:["Meu perfil","Sua identidade e apresentação na biblioteca."],config:["Configurações","Adapte o plano à sua rotina real."],admin:["Administração","Gere convites e gerencie contas sem sair da biblioteca."]};const pageHeading=titles[id]||titles.inicio;document.getElementById("page-title").textContent=pageHeading[0];document.getElementById("page-sub").textContent=pageHeading[1];try{localStorage.setItem('dharkLibraryActivePage',id)}catch(e){}if(location.hash!=='#'+id)history.replaceState(null,'','#'+id);if(id==="perfil")void dharkLoadProfile();dharkToggleMoreMenu(false);if(scroll){window.scrollTo({top:0,behavior:"instant"});requestAnimationFrame(()=>window.scrollTo(0,0))}}
 document.querySelectorAll(".nav button[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
 document.getElementById("logout-nav-button").addEventListener("click",async()=>{const b=document.getElementById("logout-nav-button");b.disabled=true;const label=b.querySelector("span");if(label)label.textContent="Saindo…";const gate=document.getElementById("auth-gate"),app=document.querySelector(".app");if(gate)gate.style.display="grid";if(app)app.style.setProperty("display","none","important");try{localStorage.removeItem("dharkLibraryActivePage");sessionStorage.clear();}catch(e){}try{const r=await fetch("/api/logout?ts="+Date.now(),{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"cache-control":"no-cache","pragma":"no-cache"}});if(!r.ok)throw Error("HTTP "+r.status);}catch(e){console.error("Logout no servidor falhou:",e);}if("caches" in window){try{await Promise.all((await caches.keys()).filter(k=>k.startsWith("dhark-library-")).map(k=>caches.delete(k)))}catch(e){}}location.replace("/?signedout="+Date.now());});
 function levelCard(l){const cat=l.title,done=categoryDoneCount(cat),total=lessons.filter(x=>x.category===cat).length,minutes=categoryMinutes(cat),unlocked=categoryUnlocked(cat),passed=!!state.categoryPasses[cat],percent=total?Math.round(done/total*100):0;return '<div class="card level '+(unlocked?"":"locked")+'"><div class="level-num">'+(unlocked?String(l.n).padStart(2,"0"):"🔒")+'</div><div style="flex:1"><div class="row"><h3>'+escapeHtml(cat)+'</h3><span class="tag">'+(passed?"Concluída":unlocked?"Atual":"Bloqueada")+'</span></div><p>'+escapeHtml(l.desc||"Aulas e prática para desenvolver esta competência.")+'</p><div class="meta"><span>◷ '+formatStudyTime(minutes)+' estimados</span><span>'+total+' aulas</span></div><div class="progress"><span style="width:'+percent+'%"></span></div><div class="row"><small class="muted">'+done+'/'+total+' aulas marcadas'+(unlocked?"":" · Desbloqueia após avaliação da categoria anterior")+'</small>'+(unlocked?'<button class="btn ghost small" onclick="openCategoryFromPath(\''+cat+'\')">Abrir aulas</button>':'')+'</div></div></div>'}
@@ -1486,6 +1497,29 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
  .pd-actions{gap:10px}
 }
 </style>
+<style id="dhark-profile-mobile-navigation">
+.dhark-profile-card{max-width:740px}.dhark-profile-header{display:flex;align-items:center;gap:20px;margin-bottom:28px}.dhark-avatar{width:94px;height:94px;flex-shrink:0;display:grid;place-items:center;border-radius:26px;background:#eaf1ff;color:#2563eb;font-size:40px;font-weight:800;overflow:hidden}.dhark-avatar img{width:100%;height:100%;object-fit:cover}.dhark-profile-card .field{margin-bottom:20px}.dhark-profile-card input[type=file]{max-width:100%;font-size:13px}
+#dhark-more-toggle{display:none}#dhark-more-menu[hidden]{display:none!important}
+@media(max-width:900px){
+ .dhark-dock-arrows{display:none!important}
+ .nav-group-label{display:none!important}
+ .side .nav{display:flex!important;overflow:visible!important;justify-content:space-between!important;gap:2px!important;width:100%!important}
+ .side .nav button{display:none!important}
+ .side .nav button[data-page="inicio"],.side .nav button[data-page="trilha"],.side .nav button[data-page="pratica"],.side .nav button[data-page="tutor"],.side .nav button[data-page="perfil"]{display:flex!important;flex:1 1 0!important;min-width:0!important;flex-direction:column!important;gap:3px!important;padding:9px 2px!important;font-size:10px!important;line-height:1.2!important;border-radius:11px!important;white-space:normal!important}
+ .side .nav button .nav-glyph{font-size:20px!important;width:auto!important;min-width:0!important}
+ .side .nav button span:last-child{text-align:center}
+ #dhark-more-toggle{display:flex!important;flex:0 0 51px;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:transparent;color:#e6edf8;border:0;border-radius:11px;font-size:18px;font-weight:750;padding:6px 2px}
+ #dhark-more-toggle span{font-size:10px}
+ #dhark-more-toggle[aria-expanded="true"]{background:#ffffff24}
+ #dhark-more-menu{display:block;position:fixed;bottom:95px;left:12px;right:12px;z-index:9998;max-height:min(65vh,560px);overflow:auto;border-radius:20px;border:1px solid #dfe7f2;background:#fff;box-shadow:0 20px 60px #17243b40;padding:15px}
+ .dhark-more-head{display:flex;justify-content:space-between;align-items:center;padding:5px 8px 14px;color:#17243b}
+ .dhark-more-head button{border:0;background:#edf3fa;border-radius:9px;padding:7px 12px}
+ #dhark-more-links{display:grid;gap:5px}
+ #dhark-more-links button{border:0;background:#f6f8fc;color:#17243b;text-align:left;padding:15px;border-radius:11px;font:inherit;font-weight:650}
+ #dhark-more-links button:hover{background:#e9f0fb}
+}
+@media(max-width:380px){.side .nav button span:last-child{font-size:9px}#dhark-more-toggle{flex-basis:43px}.dhark-avatar{width:72px;height:72px}}
+</style>
 <style id="dhark-premium-design">
 /* Dhark Library Premium — shared design tokens; accent remains customizable. */
 :root{--green:#2563eb;--green-dark:#172d59;--bg:#f5f8fc;--panel:#fff;--ink:#17243b;--muted:#63738b;--line:#e2e8f1;--accent-soft:#eff5ff;--accent-ink:#1d4ed8;--accent-hover:#1e40af;--accent-border:#d6e5fc;--shadow:0 12px 38px #1e3a8a0a;--card:#fff;--border:#e2e8f1}
@@ -1516,6 +1550,44 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
+<script id="dhark-profile-script">
+let dharkProfilePhotoData='',dharkProfileUser=null;
+function dharkToggleMoreMenu(force){
+ const menu=document.getElementById('dhark-more-menu'),toggle=document.getElementById('dhark-more-toggle');if(!menu||!toggle)return;
+ const open=typeof force==='boolean'?force:menu.hidden;
+ if(open){const host=document.getElementById('dhark-more-links');host.replaceChildren();const names=['caderno','prova','config','dominios','admin'];for(const page of names){const original=document.querySelector('.nav button[data-page="'+page+'"]');if(!original||original.hidden||getComputedStyle(original).display==='none')continue;const btn=document.createElement('button');btn.type='button';btn.textContent=original.textContent.trim();btn.onclick=()=>showPage(page);host.append(btn)}const logout=document.createElement('button');logout.type='button';logout.textContent='Sair da conta';logout.onclick=()=>document.getElementById('logout-nav-button').click();host.append(logout)}
+ menu.hidden=!open;toggle.setAttribute('aria-expanded',String(open));
+}
+async function dharkLoadProfile(){
+ const status=document.getElementById('dhark-profile-status');if(!status)return;
+ try{
+ const [me,progress]=await Promise.all([fetch('/api/me',{credentials:'same-origin',cache:'no-store'}),fetch('/api/progress',{credentials:'same-origin',cache:'no-store'})]);
+ if(!me.ok||!progress.ok)throw Error('Não foi possível carregar seu perfil.');
+ const user=(await me.json()).user;dharkProfileUser=user;const data=await progress.json();const record=(data.progress||[]).find(x=>x.key==='dhark.user.profile');const value=record?.value||{};
+ document.getElementById('dhark-profile-name').value=value.displayName||user.displayName||user.username||'';
+ document.getElementById('dhark-profile-bio').value=value.bio||'';
+ document.getElementById('dhark-profile-handle').textContent='@'+(user.username||'');
+ dharkProfilePhotoData=value.photo||'';dharkUpdateProfilePreview();status.textContent='';
+ }catch(e){status.textContent=e.message||'Erro ao carregar perfil.'}
+}
+function dharkUpdateProfilePreview(){
+ const avatar=document.getElementById('dhark-profile-avatar'),name=document.getElementById('dhark-profile-name');if(!avatar)return;
+ avatar.replaceChildren();if(dharkProfilePhotoData){const img=document.createElement('img');img.src=dharkProfilePhotoData;img.alt='Minha foto de perfil';avatar.append(img)}else{avatar.textContent=(name?.value||'U').trim().slice(0,1).toUpperCase()}
+ document.getElementById('dhark-profile-display').textContent=name?.value.trim()||dharkProfileUser?.displayName||'Meu perfil';
+}
+async function dharkPreviewProfilePhoto(input){
+ const file=input.files?.[0],status=document.getElementById('dhark-profile-status');if(!file)return;
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>8*1024*1024){status.textContent='Escolha uma imagem JPG, PNG ou WebP de até 8 MB.';input.value='';return}
+ try{const image=await createImageBitmap(file),canvas=document.createElement('canvas'),size=180;canvas.width=canvas.height=size;const ctx=canvas.getContext('2d'),side=Math.min(image.width,image.height);ctx.drawImage(image,(image.width-side)/2,(image.height-side)/2,side,side,0,0,size,size);image.close?.();dharkProfilePhotoData=canvas.toDataURL('image/jpeg',.7);dharkUpdateProfilePreview();status.textContent='Foto pronta. Clique em Salvar perfil.'}catch(e){status.textContent='Não foi possível processar esta foto.'}
+}
+async function dharkSaveProfile(){
+ const button=document.getElementById('dhark-profile-save'),status=document.getElementById('dhark-profile-status'),displayName=document.getElementById('dhark-profile-name').value.trim(),bio=document.getElementById('dhark-profile-bio').value.trim();
+ if(!displayName){status.textContent='Informe um nome de exibição.';return}
+ button.disabled=true;status.textContent='Salvando perfil…';
+ try{const res=await fetch('/api/progress',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({key:'dhark.user.profile',value:{displayName,bio,photo:dharkProfilePhotoData}})});if(!res.ok){const err=await res.json().catch(()=>({}));throw Error(err.error||'Erro ao salvar perfil (HTTP '+res.status+').')}dharkUpdateProfilePreview();status.textContent='Perfil salvo na sua conta com sucesso.'}catch(e){status.textContent=e.message||'Falha ao salvar.'}finally{button.disabled=false}
+}
+document.getElementById('dhark-profile-name')?.addEventListener('input',dharkUpdateProfilePreview);
+</script>
 <script id="dhark-auth-gate-script">
 (async function(){
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
