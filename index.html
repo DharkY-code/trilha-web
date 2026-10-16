@@ -1123,7 +1123,7 @@ async function dharkRebuildPersonalTrack(){
 async function dharkGeneratePersonalTrack(autoContinue=false){
  if(!dharkPersonalProfile)return;
  const btn=document.getElementById('personal-track-generate'),status=document.getElementById('personal-track-status');
- if(window.dharkTrackGenerating)return;window.dharkTrackGenerating=true;
+ if(window.dharkTrackGenerating)return;window.dharkTrackGenerating=true;let stageSucceeded=false;
  btn.hidden=true;status.textContent='A IA está criando suas aulas personalizadas. Isso pode levar alguns segundos…';
  try{
   const response=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'track',topic:dharkPersonalProfile.area||'Estudos',level:dharkPersonalProfile.level||'basico',question:dharkPersonalProfile.goal||'Criar uma trilha de estudos personalizada',context:dharkPersonalTrack?.modules?.map(m=>m.title+': '+m.lessons.map(l=>l.title).join(', ')).join('; ').slice(0,3500)||''})});
@@ -1138,13 +1138,13 @@ async function dharkGeneratePersonalTrack(autoContinue=false){
   const newPart={title,subject,modules:freshModules};
   await dharkPersist(dharkPersonalVersion?'ai.personal.track.v'+dharkPersonalVersion+'.part.'+before:'ai.personal.track.part.'+before,newPart);
   dharkPersonalTrack=dharkPersonalTrack?{...dharkPersonalTrack,subject,modules:[...dharkPersonalTrack.modules,...freshModules]}:{title,subject,modules:freshModules};
-  dharkRenderPersonalTrack();
+  dharkRenderPersonalTrack();stageSucceeded=true;
  }catch(e){console.warn('Geração de trilha indisponível:',e.message);if(dharkPersonalTrack){dharkRenderPersonalTrack();const status=document.getElementById('personal-track-status');status.textContent+=' Não foi possível gerar os próximos módulos agora: '+e.message}else dharkShowTemporaryStudyPlan(e)}finally{window.dharkTrackGenerating=false}
- if(autoContinue&&dharkPersonalTrack&&dharkPersonalProfile.level==='curso_completo'&&dharkPersonalTrack.modules.length<12){setTimeout(()=>dharkGeneratePersonalTrack(true),1200)}
+ if(autoContinue&&stageSucceeded&&dharkPersonalTrack&&dharkPersonalProfile.level==='curso_completo'&&dharkPersonalTrack.modules.length<12){setTimeout(()=>dharkGeneratePersonalTrack(true),1200)}
 }
 function dharkRenderPersonalTrack(){
  const title=document.getElementById('personal-track-title'),status=document.getElementById('personal-track-status'),btn=document.getElementById('personal-track-generate'),list=document.getElementById('personal-track-modules');
- if(!dharkPersonalTrack){const more=document.getElementById('personal-track-more');if(more)more.hidden=true;title.textContent='Sua trilha será criada com IA';btn.hidden=false;list.replaceChildren();return}
+ if(!dharkPersonalTrack){const rebuild=document.getElementById('personal-track-rebuild');if(rebuild)rebuild.hidden=true;const more=document.getElementById('personal-track-more');if(more)more.hidden=true;title.textContent='Sua trilha será criada com IA';btn.hidden=false;list.replaceChildren();return}
  title.textContent=dharkPersonalTrack.title;btn.hidden=true;
  const all=dharkPersonalTrack.modules.reduce((n,m)=>n+m.lessons.length,0);
  const level=dharkPersonalProfile?.level||'basico',target=level==='curso_completo'?12:level==='intermediario'?4:3;
