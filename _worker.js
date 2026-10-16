@@ -329,7 +329,7 @@ async function handleApi(request, env) {
           const available = await listing.json();
           const models = (available.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent")).map(m => String(m.name || "").replace("models/", ""));
           const priority = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash"];
-          const candidates = [...priority.filter(m => models.includes(m)), ...models.filter(m => /^gemini-.*flash/.test(m))].filter((m, i, all) => m !== preferred && all.indexOf(m) === i).slice(0, 2);
+          const candidates = [...priority.filter(m => models.includes(m)), ...models.filter(m => /^gemini-3(?:\\.|-|$)/.test(m) && /flash/.test(m))].filter((m, i, all) => m !== preferred && all.indexOf(m) === i).slice(0, 2);
           for (const candidate of candidates) {
             console.log("Gemini model fallback", candidate);
             response = await invoke(candidate);
