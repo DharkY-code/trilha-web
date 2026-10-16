@@ -314,7 +314,7 @@ async function handleApi(request, env) {
     const preferred = !configuredModel || ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"].includes(configuredModel) ? "gemini-3.5-flash-lite" : configuredModel;
     const payload = JSON.stringify({ systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "track" ? 8000 : mode === "lesson" ? 2500 : 1400 } });
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const timeout = setTimeout(() => controller.abort(), mode === "track" ? 55000 : 25000);
     let response;
     try {
       const invoke = model => fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
@@ -334,7 +334,7 @@ async function handleApi(request, env) {
           const available = await listing.json();
           const models = (available.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent")).map(m => String(m.name || "").replace("models/", ""));
           const priority = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash"];
-          const candidates = [...priority.filter(m => models.includes(m)), ...models.filter(m => /^gemini-3(?:\\.|-|$)/.test(m) && /flash/.test(m))].filter((m, i, all) => m !== preferred && all.indexOf(m) === i).slice(0, 2);
+          const candidates = [...priority.filter(m => models.includes(m)), ...models.filter(m => m.startsWith("gemini-3") && m.includes("flash"))].filter((m, i, all) => m !== preferred && all.indexOf(m) === i).slice(0, 2);
           for (const candidate of candidates) {
             console.log("Gemini model fallback", candidate);
             response = await invoke(candidate);
