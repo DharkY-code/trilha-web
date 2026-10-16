@@ -186,30 +186,30 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 #inicio>#study-timeline-card,#inicio>#home-levels,#inicio>.footer{grid-column:1/-1}
 #inicio #home-levels{grid-template-columns:repeat(2,minmax(0,1fr))}
 /* TRILHA: manifesto à esquerda, mapa de níveis à direita */
-#trilha>.card:first-of-type{grid-column:1/5;position:sticky;top:22px;background:#362348;color:#fff;min-height:250px}
-#trilha>.card:first-of-type .eyebrow{color:#d5b3eb}
-#trilha>.card:first-of-type h2{font-size:27px;letter-spacing:-.05em}
-#trilha>.card:first-of-type p{color:#e1d3e9}
+#trilha>.dhark-section-banner + .card{grid-column:1/5;position:sticky;top:22px;background:#362348;color:#fff;min-height:250px}
+#trilha>.dhark-section-banner + .card .eyebrow{color:#d5b3eb}
+#trilha>.dhark-section-banner + .card h2{font-size:27px;letter-spacing:-.05em}
+#trilha>.dhark-section-banner + .card p{color:#e1d3e9}
 #trilha>#all-levels{grid-column:5/-1;grid-row:2/4;grid-template-columns:minmax(0,1fr);margin:0!important}
 #trilha>.card:last-child{grid-column:1/5;grid-row:3;margin:0!important}
 /* AULAS: biblioteca com filtro lateral e painel de conteúdo */
-#aulas>.card:first-of-type{grid-column:1/5;grid-row:2;min-height:230px;background:#f1e9f8}
+#aulas>.dhark-section-banner + .card{grid-column:1/5;grid-row:2;min-height:230px;background:#f1e9f8}
 #aulas>.lesson-layout{grid-column:5/-1;grid-row:2;display:grid;grid-template-columns:minmax(0,1fr);margin:0!important}
 #aulas .lesson-layout>.card{width:100%}
 /* CADERNO: área de escrita ampla com controles auxiliares */
-#caderno>.card:first-of-type{grid-column:1/5;grid-row:2;background:#eee5f6;min-height:220px}
+#caderno>.dhark-section-banner + .card{grid-column:1/5;grid-row:2;background:#eee5f6;min-height:220px}
 #caderno>.grid{grid-column:5/-1;grid-row:2;grid-template-columns:minmax(0,1fr)!important;margin:0!important}
 /* PRÁTICA: estúdio em colunas com enunciados distribuídos */
-#pratica>.card:first-of-type{grid-column:1/5;grid-row:2;background:#362348;color:#fff;min-height:240px}
-#pratica>.card:first-of-type .eyebrow{color:#dfc3ef}
-#pratica>.card:first-of-type p{color:#e7d9ed}
+#pratica>.dhark-section-banner + .card{grid-column:1/5;grid-row:2;background:#362348;color:#fff;min-height:240px}
+#pratica>.dhark-section-banner + .card .eyebrow{color:#dfc3ef}
+#pratica>.dhark-section-banner + .card p{color:#e7d9ed}
 #pratica>.grid{grid-column:5/-1;grid-row:2;grid-template-columns:repeat(2,minmax(0,1fr))!important;margin:0!important;align-items:start}
 /* PROVA: avaliação centralizada e mais focada */
 #prova>.card{grid-column:2/12;grid-row:2;max-width:950px;width:100%;justify-self:center;padding:clamp(22px,4vw,44px)}
 /* TUTOR: formato de sala de conversa */
 #tutor>.card{grid-column:2/12;grid-row:2;max-width:980px;width:100%;justify-self:center;background:linear-gradient(90deg,#f4edf9 0 7px,#fff 7px);padding:clamp(24px,4vw,45px)}
 /* DOMÍNIOS: diretório de recursos em cartões */
-#dominios>.card:first-of-type{grid-column:1/5;grid-row:2;background:#f1e9f8}
+#dominios>.dhark-section-banner + .card{grid-column:1/5;grid-row:2;background:#f1e9f8}
 #dominios>.resource-grid{grid-column:5/-1;grid-row:2;grid-template-columns:repeat(2,minmax(0,1fr));margin:0!important}
 /* CONFIG: painel de preferências central, em vez de formulário solto */
 #config>.card{grid-column:2/12;grid-row:2;max-width:1000px;width:100%;justify-self:center}
@@ -217,7 +217,7 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 #admin .card{box-shadow:none}
 .page .lesson-content pre{background:#faf7fc}
 @media(max-width:1250px){.brand{font-size:0;gap:0;padding:0;border:0}.brand-mark{font-size:21px}.side{width:calc(100% - 24px);bottom:12px;padding:10px 12px}.nav button{font-size:12px;padding:10px 9px}.main{padding:30px 28px 85px}}
-@media(max-width:950px){.page.active{gap:15px}#inicio .hero{grid-column:1/-1;grid-row:1;min-height:300px}#inicio .stats{grid-column:1/-1;grid-row:2}#inicio .stats .card{min-height:130px}#inicio .dashboard>.card:not(.hero){grid-row:3}#trilha>.card:first-of-type,#aulas>.card:first-of-type,#caderno>.card:first-of-type,#pratica>.card:first-of-type,#dominios>.card:first-of-type{grid-column:1/-1;grid-row:2;position:static;min-height:0}#trilha>#all-levels,#aulas>.lesson-layout,#caderno>.grid,#pratica>.grid,#dominios>.resource-grid{grid-column:1/-1;grid-row:3}#trilha>.card:last-child{grid-column:1/-1;grid-row:4}#prova>.card,#tutor>.card,#config>.card{grid-column:1/-1}}
+@media(max-width:950px){.page.active{gap:15px}#inicio .hero{grid-column:1/-1;grid-row:1;min-height:300px}#inicio .stats{grid-column:1/-1;grid-row:2}#inicio .stats .card{min-height:130px}#inicio .dashboard>.card:not(.hero){grid-row:3}#trilha>.dhark-section-banner + .card,#aulas>.dhark-section-banner + .card,#caderno>.dhark-section-banner + .card,#pratica>.dhark-section-banner + .card,#dominios>.dhark-section-banner + .card{grid-column:1/-1;grid-row:2;position:static;min-height:0}#trilha>#all-levels,#aulas>.lesson-layout,#caderno>.grid,#pratica>.grid,#dominios>.resource-grid{grid-column:1/-1;grid-row:3}#trilha>.card:last-child{grid-column:1/-1;grid-row:4}#prova>.card,#tutor>.card,#config>.card{grid-column:1/-1}}
 @media(max-width:650px){.app{padding-bottom:115px}.side{bottom:8px;width:calc(100% - 14px);padding:8px 9px;border-radius:18px}.brand{display:none}.nav{gap:5px}.nav button{font-size:12px;min-height:48px;padding:10px 12px}.main{padding:22px 12px 48px}.top{align-items:flex-start;flex-direction:column;gap:10px;margin-bottom:20px}.top h1{font-size:clamp(29px,8vw,38px)}.pill{align-self:flex-start}.page.active{gap:12px}.dhark-section-banner{padding:20px 17px;gap:13px;min-height:112px;border-radius:17px}.dhark-section-symbol{width:46px;height:46px;flex-basis:46px;font-size:26px;border-radius:13px;box-shadow:3px 3px 0 #e9def2}.dhark-section-banner h2{font-size:22px}.dhark-section-banner p{font-size:12px}.card{padding:18px;border-radius:16px}.card:hover{transform:none}#inicio .hero{padding:27px 22px;min-height:280px;border-radius:18px}#inicio .hero h2{font-size:29px}#inicio .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#inicio .stats .card{min-height:125px;padding:14px}#inicio .dashboard>.card:not(.hero){display:block}#inicio .dashboard>.card:not(.hero)>.field{margin:12px 0}#inicio #home-levels{grid-template-columns:minmax(0,1fr)}#pratica>.grid,#dominios>.resource-grid{grid-template-columns:minmax(0,1fr)!important}.section-head{align-items:flex-start;flex-direction:column}.field input,.field select,.field textarea{font-size:16px}}
 @media(max-width:360px){#inicio .stats{grid-template-columns:minmax(0,1fr)}#inicio .stats .card{min-height:0}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.page.active{animation:none!important}.nav button,.card,.btn,.lesson-item,.progress span{transition:none!important}.nav button:hover,.btn:hover,.lesson-item:hover{transform:none!important}}
