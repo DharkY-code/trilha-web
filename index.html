@@ -118,45 +118,91 @@ button,a,input,select,textarea{max-width:100%;touch-action:manipulation}
 </head>
 <body>
 <style id="dhark-visual-refresh">
-/* Refinamento visual responsivo: somente CSS, sem alterar a lógica. */
-:root{--bg:#f7f5fb;--panel:#ffffff;--ink:#251b31;--muted:#73677e;--line:#e9e1f0;--shadow:0 8px 28px rgba(59,31,82,.055)}
-body{background:radial-gradient(ellipse 65% 30% at 72% 0%,#eee5f8 0%,transparent 75%),var(--bg);color:var(--ink);font-size:15px;line-height:1.6}
-.side{background:linear-gradient(165deg,#21152f 0%,#302044 60%,#241632 100%);border-right:1px solid #ffffff16}
-.brand{letter-spacing:-.025em}
-.nav button{border-radius:12px;transition:background .18s ease,transform .18s ease}
-.nav button:hover{transform:translateX(2px)}
-.nav button.active{box-shadow:inset 3px 0 0 #d7b6ff}
-.main{padding-top:clamp(24px,3vw,46px)}
-.top{margin-bottom:30px}
-.top h1{font-weight:850;letter-spacing:-.045em;line-height:1.15}
-.sub{line-height:1.65}
-.card{border-radius:20px;box-shadow:var(--shadow);transition:box-shadow .2s ease,border-color .2s ease}
-.card:hover{border-color:#d9c9e8;box-shadow:0 12px 34px rgba(59,31,82,.09)}
-.stats{gap:18px}
-.stat-label{font-weight:650;letter-spacing:.015em}
-.stat-value{font-size:clamp(25px,2.4vw,34px);line-height:1.2}
-.hero{background:linear-gradient(130deg,#332047,#52336e 65%,#654388);border-radius:22px}
-.hero:after{color:#ffffff0a}
-.section-head h2{font-weight:800;letter-spacing:-.035em}
-.level,.lesson-item{transition:border-color .18s ease,background .18s ease}
-.lesson-item:hover{background:#fcfaff;border-color:#d9c9e8}
-.level-num{border-radius:14px}
-.btn{border-radius:12px;transition:filter .18s ease,transform .18s ease,box-shadow .18s ease}
-.btn:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 5px 14px #3521471c}
-.btn:active{transform:translateY(0)}
-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #ad79e3;outline-offset:3px}
-.field input,.field select,.field textarea{border-radius:12px;background:#fff;transition:border-color .18s ease,box-shadow .18s ease}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#a879d5;box-shadow:0 0 0 3px #a879d51c}
-.progress{height:9px;background:#ede6f3}
-.pill{border:1px solid #e7d8f1}
-.notice,.result{border:1px solid #e9dff0}
-#auth-gate{background:radial-gradient(ellipse at 50% 0%,#e6d5f6 0%,#f8f5fc 70%)}
-#auth-gate .auth-card{box-shadow:0 20px 60px #321a5018}
-@media(min-width:1101px){.app{grid-template-columns:255px minmax(0,1fr)}.side{position:sticky;top:0;height:100dvh;overflow-y:auto}.main{padding-left:clamp(28px,4vw,60px);padding-right:clamp(28px,4vw,60px)}}
-@media(max-width:1100px){.side{background:linear-gradient(110deg,#251735,#3b2550);border-right:0;border-bottom:1px solid #ffffff24}.nav button:hover{transform:none}.main{padding-top:22px}.stats{gap:12px}.card:hover{box-shadow:var(--shadow)}}
-@media(max-width:700px){body{font-size:14px}.side{padding:12px 12px 10px}.nav{scrollbar-width:none}.nav::-webkit-scrollbar{display:none}.nav button{min-height:44px}.main{padding:20px 14px 32px}.top{margin-bottom:22px}.top h1{line-height:1.2}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stats .card{padding:14px;border-radius:16px}.stat-value{font-size:clamp(22px,6vw,27px)}.card{border-radius:17px;padding:17px}.hero{border-radius:18px}.lesson-item{border-radius:13px}.section-head{margin-top:26px}.btn{min-height:44px}}
-@media(max-width:380px){.stats{grid-template-columns:minmax(0,1fr)}.main{padding-left:11px;padding-right:11px}}
-@media(prefers-reduced-motion:reduce){.nav button,.card,.lesson-item,.level,.btn,.field input,.field select,.field textarea{transition:none!important}.btn:hover,.nav button:hover{transform:none}}
+/* Dhark Library 2.0 — renovação visual isolada, sem modificar comportamento */
+:root{--bg:#f7f5fc;--panel:#fff;--ink:#271c35;--muted:#786c87;--line:#e9e2f2;--shadow:0 10px 35px rgba(46,24,75,.055)}
+html{scroll-behavior:smooth}
+body{color:var(--ink);background:radial-gradient(circle at 75% 0%,#e9dff8 0,transparent 32%),radial-gradient(circle at 4% 75%,#f2eafb 0,transparent 35%),#f8f7fc;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.65}
+.app{grid-template-columns:274px minmax(0,1fr);align-items:start}
+.side{position:sticky;top:0;height:100dvh;overflow-y:auto;background:linear-gradient(170deg,#1d1230 0%,#302047 48%,#251736 100%);border-right:1px solid #ffffff20;padding:30px 18px 22px;gap:35px;box-shadow:12px 0 36px #2713380b;scrollbar-width:thin}
+.brand{font-size:20px;letter-spacing:-.045em;gap:13px;padding:0 9px;color:#fff}
+.brand-mark{width:48px;height:48px;flex-basis:48px;border-radius:17px;background:linear-gradient(140deg,#f3e8ff,#d5b0fc 48%,#a96fe4);box-shadow:0 7px 25px #0e061d60,inset 0 1px #ffffffaa;transform:rotate(-5deg)}
+.nav{display:grid;gap:7px}
+.nav button{position:relative;min-height:47px;border:1px solid transparent;border-radius:14px;padding:11px 13px;color:#d9cce7;font-size:14px;font-weight:650;letter-spacing:.005em;transition:background .22s ease,color .22s ease,transform .22s ease,border-color .22s ease}
+.nav button:hover{background:#ffffff12;color:white;transform:translateX(4px)}
+.nav button.active{background:linear-gradient(100deg,#7950aa 0%,#68428f 100%);border-color:#ffffff2b;color:white;box-shadow:0 6px 18px #0d071d35}
+.nav button.active:before{content:"";position:absolute;left:-7px;top:12px;bottom:12px;width:3px;border-radius:6px;background:#d7b2ff;box-shadow:0 0 12px #d7b2ff80}
+.side-note{border:1px solid #ffffff1f;background:#ffffff0b;border-radius:18px;padding:18px;color:#d8cde6;line-height:1.7}
+.side-note strong{color:#fff;font-size:14px}
+.main{max-width:1600px;padding:42px clamp(25px,4vw,66px) 58px}
+.top{position:relative;align-items:center;gap:20px;margin-bottom:30px;padding:4px 0 20px;border-bottom:1px solid #e8e0ef}
+.eyebrow{font-size:11px;letter-spacing:.18em;font-weight:850;color:#8b58b9;text-transform:uppercase}
+.top h1{margin:8px 0 7px;font-size:clamp(29px,3vw,44px);font-weight:850;letter-spacing:-.055em;line-height:1.15;color:#2d1d3f}
+.sub{font-size:14px;color:#81748c;max-width:660px}
+.pill{border:1px solid #e4d4f3;background:linear-gradient(135deg,#fff,#f1e9fa);color:#654185;box-shadow:0 5px 20px #6d47900c;padding:10px 15px;font-weight:800}
+.grid{gap:20px}
+.card{position:relative;background:#fff;border:1px solid #ebe4f1;border-radius:24px;padding:25px;box-shadow:0 10px 35px #30144c09,0 2px 8px #30144c04;transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,border-color .25s}
+.card:hover{border-color:#d9c5ec;box-shadow:0 16px 40px #3e206014;transform:translateY(-2px)}
+.stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:23px}
+.stats>.card{min-height:150px;overflow:hidden;padding:24px 22px;background:linear-gradient(145deg,#fff 45%,#faf6ff)}
+.stats>.card:before{content:"";display:block;width:35px;height:5px;border-radius:99px;background:#aa80d7;margin-bottom:17px}
+.stats>.card:nth-child(2):before{background:#74b8a3}
+.stats>.card:nth-child(3):before{background:#eab06f}
+.stats>.card:nth-child(4):before{background:#91a8e8}
+.stat-label{font-size:12px;font-weight:750;color:#82758d;letter-spacing:.02em}
+.stat-value{font-size:clamp(26px,2.7vw,37px);font-weight:850;line-height:1.25;margin:7px 0;color:#31203f;letter-spacing:-.055em}
+.stat-foot{font-size:12px;color:#8c8096;line-height:1.5}
+.dashboard{grid-template-columns:minmax(0,1.35fr) minmax(290px,.85fr);gap:20px}
+.hero{isolation:isolate;overflow:hidden;background:linear-gradient(125deg,#40245f 0%,#6d42a0 65%,#9361c2 100%);border:0;color:white;padding:clamp(26px,3vw,42px);min-height:285px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.hero:before{content:"";position:absolute;z-index:-1;width:290px;height:290px;border:1px solid #ffffff25;border-radius:50%;right:-95px;top:-115px;box-shadow:0 0 0 50px #ffffff07,0 0 0 100px #ffffff06}
+.hero:after{content:"✦";position:absolute;right:42px;bottom:12px;font-size:100px;font-weight:400;color:#ffffff18;transform:rotate(-14deg)}
+.hero .eyebrow{color:#e4cafa}
+.hero h2{font-size:clamp(25px,2.5vw,34px);font-weight:850;line-height:1.18;letter-spacing:-.045em;margin:15px 0 10px;max-width:500px}
+.hero p{font-size:14px;color:#f0e4fb;line-height:1.75;max-width:480px}
+.btn{min-height:43px;border-radius:13px;padding:11px 17px;font-weight:800;box-shadow:0 4px 13px #34204813;transition:transform .22s ease,box-shadow .22s ease,filter .22s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px #3420482b;filter:brightness(1.06)}
+.btn:active{transform:scale(.98)}
+.btn.light{background:#fff;color:#59317b}
+.btn.ghost{background:#f0e8fa;color:#633c84;box-shadow:none}
+.btn.small{min-height:39px}
+.section-head{margin:35px 0 16px;gap:16px}
+.section-head h2{font-size:clamp(20px,2vw,25px);font-weight:850;letter-spacing:-.04em;color:#302040}
+.section-head p{font-size:13px}
+.levels{gap:17px}
+.level{gap:15px}
+.level-num{width:47px;height:47px;flex-basis:47px;border-radius:16px;background:linear-gradient(145deg,#f1e4ff,#e3d0f8);color:#6c3c95;box-shadow:inset 0 1px #fff}
+.level h3{font-weight:800;letter-spacing:-.02em}
+.level p{line-height:1.65}
+.lesson-item{border-radius:16px;border-color:#eee6f4;padding:17px;transition:background .2s,border-color .2s,transform .2s}
+.lesson-item:hover{background:#fcf9ff;border-color:#d9c5ed;transform:translateX(2px)}
+.lesson-item input,.option input{accent-color:#8052ae}
+.progress{height:10px;background:#eee8f5;border-radius:20px}
+.progress span{background:linear-gradient(90deg,#8052ae,#b284e4);border-radius:20px;transition:width .5s ease}
+.tag:not(.gold):not(.gray),.result{background:#f0e5fa;color:#654087}
+.tag{border-radius:9px;padding:6px 10px}
+.field label{font-weight:750;color:#564466}
+.field input,.field select,.field textarea{border:1px solid #e4d9ed;border-radius:13px;background:#fff;padding:12px 14px;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#9869c7;box-shadow:0 0 0 4px #a97bd51f}
+.notice{border:1px solid #f0dfb8;border-radius:15px}
+.resource{gap:12px}
+.lesson-content{line-height:1.85}
+.lesson-content pre{background:#f9f6fd;border:1px solid #e7ddef;border-radius:15px}
+.source a,.lesson-item a{color:#7747a3}
+.footer{color:#9b91a5}
+.page.active{animation:dharkPageEnter .38s cubic-bezier(.2,.8,.2,1) both}
+@keyframes dharkPageEnter{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dharkCardEnter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.page.active .stats>.card{animation:dharkCardEnter .48s ease both}
+.page.active .stats>.card:nth-child(2){animation-delay:.06s}
+.page.active .stats>.card:nth-child(3){animation-delay:.12s}
+.page.active .stats>.card:nth-child(4){animation-delay:.18s}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #a776d8;outline-offset:3px}
+#auth-gate{background:radial-gradient(circle at 50% 0%,#e9d7fa,#f9f7fc 68%)}
+#auth-gate .auth-card{border-radius:28px;box-shadow:0 25px 75px #42246024}
+@media(min-width:1101px){.side{height:100dvh}.main{min-width:0}}
+@media(max-width:1100px){.app{display:block;grid-template-columns:minmax(0,1fr)}.side{position:relative;top:auto;height:auto;overflow:visible;width:100%;padding:15px 20px 12px;gap:15px;background:linear-gradient(110deg,#251637,#49305e);box-shadow:0 7px 24px #26133614}.brand{font-size:18px}.brand-mark{width:40px;height:40px;flex-basis:40px;border-radius:13px}.nav{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain;padding:3px 0 7px}.nav::-webkit-scrollbar{display:none}.nav button{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:10px 13px}.nav button.active:before{left:12px;right:12px;top:auto;bottom:-4px;width:auto;height:3px}.nav button:hover{transform:none}.side-note{display:none}.main{max-width:1050px;margin:auto;padding:27px 22px 48px}.dashboard,.lesson-layout{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.levels,.resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card:hover{transform:none}}
+@media(max-width:700px){body{font-size:14px}.side{padding:12px 12px 9px;gap:11px}.brand{font-size:17px}.nav button{font-size:13px;min-height:44px;border-radius:11px}.main{padding:22px 13px 40px}.top{align-items:flex-start;flex-direction:column;gap:12px;margin-bottom:20px;padding-bottom:18px}.top h1{font-size:clamp(27px,7vw,36px)}.sub{font-size:13px}.pill{align-self:flex-start;font-size:12px}.grid{gap:12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}.stats>.card{min-height:137px;padding:17px 14px;border-radius:18px}.stats>.card:before{margin-bottom:12px;width:28px;height:4px}.stat-label{font-size:11px}.stat-value{font-size:clamp(23px,6vw,30px);overflow-wrap:anywhere}.stat-foot{font-size:11px}.card{border-radius:19px;padding:19px}.hero{min-height:260px;padding:25px 22px;border-radius:20px}.hero h2{font-size:clamp(25px,6.5vw,31px)}.hero:after{right:15px;font-size:74px}.section-head{margin:28px 0 13px}.section-head h2{font-size:21px}.levels,.resource-grid{grid-template-columns:minmax(0,1fr)}.lesson-item{padding:14px}.btn{min-height:45px}.field input,.field select,.field textarea{font-size:16px}}
+@media(max-width:360px){.stats{grid-template-columns:minmax(0,1fr)}.stats>.card{min-height:0}.main{padding-left:10px;padding-right:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.page.active,.page.active .stats>.card{animation:none!important}.nav button,.card,.btn,.lesson-item,.progress span,.field input,.field select,.field textarea{transition:none!important}.btn:hover,.lesson-item:hover{transform:none!important}}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
