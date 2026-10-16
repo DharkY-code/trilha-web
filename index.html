@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dhark Library">
 <title>Dhark Library — Sua biblioteca de desenvolvimento</title>
-<style id="dhark-auth-first-paint">#auth-gate{display:none!important}html[data-dhark-auth="login"] #auth-gate{display:grid!important}</style>
+<style id="dhark-auth-first-paint">html:not([data-dhark-auth]) body{visibility:hidden}#auth-gate{display:none!important}html[data-dhark-auth="login"] #auth-gate{display:grid!important}</style>
 <script id="dhark-account-storage-isolation">
 (function(){
  const keys=new Set(['trilhaWebState','dharkLibraryLastSaved','dharkManuCompleted','dharkLibraryActivePage','trilhaWebThemeColor','dharkLibraryNotebooks']);
