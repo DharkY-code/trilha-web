@@ -328,13 +328,26 @@ async function handleApi(request, env) {
     const answer = String(b?.answer || "").trim().slice(0, 3500);
     if (!question || (mode === "grade" && !answer)) return json({ error: "Preencha os campos obrigatórios." }, 400);
     if (JSON.stringify(b).length > 18000) return json({ error: "Solicitação muito grande." }, 413);
-    const day = new Date().toISOString().slice(0, 10);
-    const quotaKey = "ai.daily." + day;
-    // Incremento atômico evita ultrapassar o limite mesmo com várias abas.
-    const quota = await env.DB.prepare(
-      "INSERT INTO progress (user_id,record_key,record_json,updated_at) VALUES (?,?, '1',unixepoch()) ON CONFLICT(user_id,record_key) DO UPDATE SET record_json=CAST(CAST(progress.record_json AS INTEGER)+1 AS TEXT),updated_at=unixepoch() WHERE CAST(progress.record_json AS INTEGER)<30 RETURNING record_json"
-    ).bind(auth.user.id, quotaKey).first();
-    if (!quota) return json({ error: "Limite diário de 30 solicitações atingido. Tente novamente amanhã." }, 429);
+    // Dúvidas novas e recriação de trilhas consomem a cota; aulas aprofundadas e a primeira geração não.
+    let countsTowardQuota = mode === "tutor";
+    if (mode === "track") {
+      const state = await env.DB.prepare("SELECT record_json FROM progress WHERE user_id=? AND record_key='ai.personal.active.version'").bind(auth.user.id).first();
+      let activeVersion = "";
+      try { activeVersion = String(JSON.parse(state?.record_json || "null") ?? ""); } catch (_) {}
+      const previous = await env.DB.prepare("SELECT record_key FROM progress WHERE user_id=? AND (record_key LIKE 'ai.personal.track.v%.part.%' OR record_key LIKE 'ai.personal.track.part.%') LIMIT 1").bind(auth.user.id).first();
+      const current = activeVersion && activeVersion !== "null" ? await env.DB.prepare("SELECT record_key FROM progress WHERE user_id=? AND record_key LIKE ? LIMIT 1").bind(auth.user.id, "ai.personal.track.v" + activeVersion + ".part.%").first() : null;
+      countsTowardQuota = Boolean(previous && !current);
+    }
+    let remainingToday = 30;
+    if (countsTowardQuota) {
+      const day = new Date().toISOString().slice(0, 10);
+      const quotaKey = "ai.daily." + day;
+      const quota = await env.DB.prepare(
+        "INSERT INTO progress (user_id,record_key,record_json,updated_at) VALUES (?,?, '1',unixepoch()) ON CONFLICT(user_id,record_key) DO UPDATE SET record_json=CAST(CAST(progress.record_json AS INTEGER)+1 AS TEXT),updated_at=unixepoch() WHERE CAST(progress.record_json AS INTEGER)<30 RETURNING record_json"
+      ).bind(auth.user.id, quotaKey).first();
+      if (!quota) return json({ error: "Limite diário de 30 solicitações para dúvidas e recriações atingido. Aulas completas e primeiras gerações continuam disponíveis." }, 429);
+      remainingToday = Math.max(0, 30 - Number(quota.record_json));
+    }
     const instructions = {
       tutor: "Você é o tutor da Dhark Library. Responda em português brasileiro com didática, exemplos concretos e uma sugestão de exercício. Ajude a pessoa a pensar; não invente fatos. Se não tiver certeza, diga.",
       lesson: "Você é designer instrucional da Dhark Library. Crie uma aula original em português brasileiro sobre o tema solicitado, para o nível indicado. Use os títulos: Objetivos, Pré-requisitos, Fundamentos e conceitos, Explicação detalhada passo a passo, Pelo menos três exemplos resolvidos e comentados, Erros comuns e como evitá-los, Aplicações no mundo real, Atividade prática, Questões de revisão (3 perguntas), Resumo e Próximos passos. Produza uma aula aprofundada e didática, com explicações extensas e precisas; não entregue apenas tópicos ou resumos. Você não possui acesso à pesquisa na web nesta integração. Não afirme ter pesquisado fontes nem invente URLs, autores, livros, citações ou trechos. Oriente o aluno a verificar informações que exigem atualização em fontes confiáveis. Para alfabetos estrangeiros, introduza primeiro os símbolos, transliteração, pronúncia aproximada e exemplos antes de exigir leitura ou pronúncia. O tema pode ser qualquer assunto educacional apropriado. Não afirme que a aula foi verificada por especialista.",
@@ -395,7 +408,7 @@ async function handleApi(request, env) {
     const text = String(data.choices?.[0]?.message?.content || "").trim();
     if (!text) return json({ error: "A GroqCloud não retornou conteúdo para esta solicitação." }, 502);
     // Sem ferramenta de pesquisa integrada, não apresentar referências não verificadas.
-    return json({ text: text.slice(0, mode === "track" ? 60000 : 22000), sources: [], mode, remainingToday: Math.max(0, 30 - Number(quota.record_json)) });
+    return json({ text: text.slice(0, mode === "track" ? 60000 : 22000), sources: [], mode, remainingToday });
   }
 
   if (path === "/api/study-profile" && request.method === "GET") {
