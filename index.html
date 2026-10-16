@@ -1075,7 +1075,7 @@ async function dharkSetupPersonalStudy(user){
  document.body.classList.add('dhark-personal-account');
  const nav=document.querySelector('.nav button[data-page="trilha"]');if(nav)nav.querySelector('span').textContent='Minha trilha';
  const goal=document.getElementById('personal-track-goal');if(goal)goal.textContent=dharkPersonalProfile.goal||'Seu plano de estudos';
- const progress=await fetch('/api/progress',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json());
+ const progressResponse=await fetch('/api/progress',{credentials:'same-origin',cache:'no-store'});if(!progressResponse.ok)throw Error('Não foi possível recuperar suas aulas salvas. Tente entrar novamente.');const progress=await progressResponse.json();
  const records=Object.fromEntries((progress.progress||[]).map(x=>[x.key,x.value]));
  dharkPersonalTrack=records['ai.personal.track']||null;
  dharkPersonalVersion=Number(records['ai.personal.active.version']||0);
@@ -1092,7 +1092,7 @@ async function dharkSetupPersonalStudy(user){
  dharkAssessmentSets={practice:records['ai.personal.assessment.practice']||null,exam:records['ai.personal.assessment.exam']||null};
  dharkRenderPersonalTrack();
  if(!dharkPersonalTrack)void dharkGeneratePersonalTrack(true);
- else if(dharkPersonalProfile.level==='curso_completo'&&dharkPersonalTrack.modules.length<12&&dharkPersonalTrack.subject&&dharkPersonalTrack.subject.toLocaleLowerCase('pt-BR')===String(dharkPersonalProfile.area||'').toLocaleLowerCase('pt-BR'))void dharkGeneratePersonalTrack(true);
+ // Trilhas existentes nunca são ampliadas ou recriadas automaticamente ao entrar na conta.
  showPage('minha-trilha-ia',false);
 }
 function dharkShowTemporaryStudyPlan(error){
@@ -1124,6 +1124,7 @@ async function dharkRebuildPersonalTrack(){
 }
 async function dharkGeneratePersonalTrack(autoContinue=false){
  if(!dharkPersonalProfile)return;
+ if(dharkPersonalTrack&&!autoContinue){return dharkRenderPersonalTrack()}
  const btn=document.getElementById('personal-track-generate'),status=document.getElementById('personal-track-status');
  if(window.dharkTrackGenerating)return;window.dharkTrackGenerating=true;let stageSucceeded=false;
  btn.hidden=true;status.textContent='A IA está criando suas aulas personalizadas. Isso pode levar alguns segundos…';
@@ -1138,11 +1139,15 @@ async function dharkGeneratePersonalTrack(autoContinue=false){
   const subject=dharkPersonalProfile.area||'Estudos';
   const title=dharkPersonalTrack?.title||String(track.title||'Minha trilha').slice(0,140);
   const newPart={title,subject,modules:freshModules};
-  await dharkPersist(dharkPersonalVersion?'ai.personal.track.v'+dharkPersonalVersion+'.part.'+before:'ai.personal.track.part.'+before,newPart);
+  // Salvar cada módulo separadamente evita exceder o limite de 50 KB por registro no D1.
+   for(let offset=0;offset<freshModules.length;offset++){
+    const part={title,subject,modules:[freshModules[offset]]};
+    await dharkPersist(dharkPersonalVersion?'ai.personal.track.v'+dharkPersonalVersion+'.part.'+(before+offset):'ai.personal.track.part.'+(before+offset),part);
+   }
   dharkPersonalTrack=dharkPersonalTrack?{...dharkPersonalTrack,subject,modules:[...dharkPersonalTrack.modules,...freshModules]}:{title,subject,modules:freshModules};
   dharkRenderPersonalTrack();stageSucceeded=true;
  }catch(e){console.warn('Geração de trilha indisponível:',e.message);if(dharkPersonalTrack){dharkRenderPersonalTrack();const status=document.getElementById('personal-track-status');status.textContent+=' Não foi possível gerar os próximos módulos agora: '+e.message}else dharkShowTemporaryStudyPlan(e)}finally{window.dharkTrackGenerating=false}
- if(autoContinue&&stageSucceeded&&dharkPersonalTrack&&dharkPersonalProfile.level==='curso_completo'&&dharkPersonalTrack.modules.length<12){setTimeout(()=>dharkGeneratePersonalTrack(true),1200)}
+ // Próximos módulos só são gerados quando o estudante solicitar.
 }
 function dharkCleanLessonTitle(value){let title=String(value||'').trim();for(let i=0;i<12;i++){const next=title.replace(/^\s*(?:(?:aula|lição|licao)\s*(?:n[º°.]?\s*)?\d+|\d+\s*[.)])\s*(?:[:.\-–—)]\s*|\s+)/i,'').trim();if(next===title)break;title=next}return title||'Conteúdo da aula'}
 function dharkRenderPersonalTrack(){
