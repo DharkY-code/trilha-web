@@ -747,9 +747,9 @@ ORDER BY ano DESC;</code></pre></details></div>
     <div class="field" style="align-self:end"><button class="btn" type="submit">Gerar convite</button></div>
    </form><div id="admin-new-code" aria-live="polite"></div>
   </div>
-  <div class="card" style="margin-top:16px"><h3>Convites existentes</h3><div id="admin-invites-list"></div></div>
+  <div class="card" style="margin-top:16px"><h3>Convites existentes</h3><div class="admin-bulk-toolbar"><label><input type="checkbox" id="admin-select-all-invites"> Selecionar todos os convites exibidos</label><button type="button" class="btn danger small" id="admin-delete-selected-invites" disabled>Apagar selecionados (0)</button></div><div id="admin-invites-list"></div></div>
   <div class="card" id="admin-temporary-section" style="margin-top:16px" hidden><h3>Administrador temporário</h3><p class="muted">Crie um acesso administrativo separado, com prazo de validade. A senha principal não é compartilhada.</p><form id="admin-temporary-form" class="grid"><label>Usuário<input name="username" pattern="[a-z0-9_-]{3,32}" minlength="3" maxlength="32" required placeholder="amigo_temp"></label><label>Nome<input name="displayName" maxlength="100" required placeholder="Convidado"></label><label>Senha temporária (mínimo 12 caracteres)<input name="password" type="password" minlength="12" maxlength="128" required autocomplete="new-password"></label><label>Validade<select name="hours"><option value="1">1 hora</option><option value="6">6 horas</option><option value="24" selected>24 horas</option><option value="72">3 dias</option><option value="168">7 dias</option></select></label><button class="btn" type="submit">Criar administrador temporário</button></form><div id="admin-temporary-list"></div></div>
-  <div class="card" style="margin-top:16px"><h3>Contas cadastradas</h3><div id="admin-users-list"></div></div>
+  <div class="card" style="margin-top:16px"><h3>Contas cadastradas</h3><div class="admin-bulk-toolbar"><label><input type="checkbox" id="admin-select-all-users"> Selecionar todas as contas exibidas</label><button type="button" class="btn danger small" id="admin-delete-selected-users" disabled>Apagar selecionadas (0)</button></div><div id="admin-users-list"></div></div>
   <button class="btn ghost" type="button" id="admin-refresh-button">Atualizar painel</button>
  </div></div>
 </section>
@@ -1297,6 +1297,13 @@ const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#70499c';app
 #admin-users-list .lesson-item,#admin-invites-list .lesson-item{min-width:0;overflow-wrap:anywhere}
 #admin-users-list .lesson-item button,#admin-invites-list .lesson-item button{display:inline-flex;width:auto;max-width:100%;min-height:40px;align-items:center;justify-content:center;white-space:normal;line-height:1.25;padding:9px 12px;margin:6px 6px 0 0;flex:0 1 auto}
 #admin-users-list .lesson-item,#admin-invites-list .lesson-item{display:block}
+.admin-bulk-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:12px 0;padding:12px;border:1px solid var(--border,#ddd);border-radius:12px}
+.admin-bulk-toolbar label,.admin-bulk-select{display:flex;align-items:center;gap:9px;cursor:pointer}
+.admin-bulk-toolbar input,.admin-bulk-select input{width:19px;height:19px;accent-color:#7540a8;flex-shrink:0}
+.admin-bulk-toolbar button{width:auto;max-width:100%}
+.admin-bulk-toolbar button:disabled{opacity:.5;cursor:not-allowed}
+.admin-bulk-select{margin-bottom:10px;font-weight:700}
+
 #admin-users-list .btn.danger{background:#a5263d;color:#fff;border:0}
 @media(max-width:600px){#admin-users-list .lesson-item button,#admin-invites-list .lesson-item button{font-size:14px;min-height:42px;width:auto;max-width:100%}#admin-users-list .lesson-item{padding:12px}}
 </style>
@@ -1312,13 +1319,52 @@ const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#70499c';app
    const me=await api('/api/me');
    if(me.user?.role!=='admin')throw new Error('Esta área está disponível somente para a conta administradora.');
    const [iv,us]=await Promise.all([api('/api/admin/invites'),api('/api/admin/users')]);
-   $('admin-invites-list').innerHTML=(iv.invites||[]).map(i=>'<div class="lesson-item"><strong>Convite …'+esc(i.code_hint)+'</strong><p>Usos: '+esc(i.used_count)+'/'+esc(i.max_uses)+' · '+(i.revoked_at?'Revogado':'Ativo')+'</p><button class="btn danger small" type="button" data-admin-revoke="'+esc(i.id)+'">Apagar convite</button></div>').join('')||'<p class="muted">Nenhum convite criado.</p>';
-   $('admin-users-list').innerHTML=(us.users||[]).map(u=>'<div class="lesson-item"><strong>'+esc(u.display_name)+' (@'+esc(u.username)+')</strong><p>'+esc(u.area)+' · '+esc(u.level||'nível não definido')+' · '+esc(u.status)+'</p><p>'+esc(u.learning_goal||'')+'</p>'+(u.status==='active'?'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="suspended">Suspender</button>':'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="active">Reativar</button>')+' <button class="btn danger small" type="button" data-admin-delete-user="'+esc(u.id)+'" data-admin-username="'+esc(u.username)+'">Deletar conta</button></div>').join('')||'<p class="muted">Ainda não há contas cadastradas.</p>';
+   $('admin-invites-list').innerHTML=(iv.invites||[]).map(i=>'<div class="lesson-item"><label class="admin-bulk-select"><input type="checkbox" data-admin-select-invite="'+esc(i.id)+'"> Selecionar convite</label><strong>Convite …'+esc(i.code_hint)+'</strong><p>Usos: '+esc(i.used_count)+'/'+esc(i.max_uses)+' · '+(i.revoked_at?'Revogado':'Ativo')+'</p><button class="btn danger small" type="button" data-admin-revoke="'+esc(i.id)+'">Apagar convite</button></div>').join('')||'<p class="muted">Nenhum convite criado.</p>';
+   $('admin-users-list').innerHTML=(us.users||[]).map(u=>'<div class="lesson-item"><label class="admin-bulk-select"><input type="checkbox" data-admin-select-user="'+esc(u.id)+'" data-admin-select-username="'+esc(u.username)+'"> Selecionar conta</label><strong>'+esc(u.display_name)+' (@'+esc(u.username)+')</strong><p>'+esc(u.area)+' · '+esc(u.level||'nível não definido')+' · '+esc(u.status)+'</p><p>'+esc(u.learning_goal||'')+'</p>'+(u.status==='active'?'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="suspended">Suspender</button>':'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="active">Reativar</button>')+' <button class="btn danger small" type="button" data-admin-delete-user="'+esc(u.id)+'" data-admin-username="'+esc(u.username)+'">Deletar conta</button></div>').join('')||'<p class="muted">Ainda não há contas cadastradas.</p>';
    try{const temporary=await api('/api/admin/temporary-admins');$('admin-temporary-section').hidden=false;$('admin-temporary-list').innerHTML=(temporary.accounts||[]).map(t=>'<div class="lesson-item"><strong>'+esc(t.display_name)+' (@'+esc(t.username)+')</strong><p>Expira: '+new Date(t.expires_at*1000).toLocaleString('pt-BR')+' · '+(t.revoked_at?'Revogado':t.expires_at*1000<=Date.now()?'Expirado':'Ativo')+'</p>'+(!t.revoked_at&&t.expires_at*1000>Date.now()?'<button class="btn danger small" type="button" data-temp-admin-revoke="'+esc(t.user_id)+'">Revogar acesso</button>':'')+'</div>').join('')||'<p class="muted">Nenhum administrador temporário criado.</p>';}catch(err){$('admin-temporary-section').hidden=true;if(!/403/.test(err.message))console.warn('Administrador temporário:',err.message)}
-   content.hidden=false;msg.textContent='Painel carregado.';
+   updateBulkButtons();content.hidden=false;msg.textContent='Painel carregado.';
   }catch(e){msg.textContent=e.message;content.hidden=true}
  }
-const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), maxInput=$('admin-invite-max');
+const bulkConfigs={
+  invites:{list:'admin-invites-list',selector:'[data-admin-select-invite]',all:'admin-select-all-invites',button:'admin-delete-selected-invites',endpoint:'/api/admin/invites/'},
+  users:{list:'admin-users-list',selector:'[data-admin-select-user]',all:'admin-select-all-users',button:'admin-delete-selected-users',endpoint:'/api/admin/users/'}
+ };
+ function updateBulkButtons(){
+  for(const [kind,c] of Object.entries(bulkConfigs)){
+   const boxes=[...$(c.list).querySelectorAll(c.selector)],selected=boxes.filter(b=>b.checked);
+   $(c.button).disabled=!selected.length;
+   $(c.button).textContent=(kind==='users'?'Apagar selecionadas':'Apagar selecionados')+' ('+selected.length+')';
+   $(c.all).checked=boxes.length>0&&selected.length===boxes.length;
+   $(c.all).indeterminate=selected.length>0&&selected.length<boxes.length;
+  }
+ }
+ for(const [kind,c] of Object.entries(bulkConfigs)){
+  $(c.list).addEventListener('change',e=>{if(e.target.matches(c.selector))updateBulkButtons()});
+  $(c.all).addEventListener('change',e=>{$(c.list).querySelectorAll(c.selector).forEach(b=>{b.checked=e.target.checked});updateBulkButtons()});
+  $(c.button).addEventListener('click',async()=>{
+   const selected=[...$(c.list).querySelectorAll(c.selector)].filter(b=>b.checked);
+   if(!selected.length)return;
+   const count=selected.length;
+   if(kind==='users'){
+    if(!confirm('ATENÇÃO: excluir permanentemente '+count+' conta(s) e TODOS os dados e progressos associados? Esta ação NÃO pode ser desfeita.'))return;
+    if(prompt('Para confirmar a exclusão de '+count+' conta(s), digite exatamente EXCLUIR '+count)!=='EXCLUIR '+count){msg.textContent='Exclusão em lote cancelada: confirmação incorreta.';return}
+   }else if(!confirm('Apagar permanentemente '+count+' convite(s) selecionado(s)? Esta ação não pode ser desfeita.'))return;
+   $(c.button).disabled=true;$(c.all).disabled=true;
+   let deleted=0;const errors=[];
+   for(const item of selected){
+    const id=kind==='users'?item.dataset.adminSelectUser:item.dataset.adminSelectInvite;
+    msg.textContent='Excluindo '+(deleted+errors.length+1)+' de '+count+'…';
+    try{
+     const result=await api(c.endpoint+encodeURIComponent(id),{method:'DELETE'});
+     if(!result.deleted)throw new Error('Exclusão não confirmada pelo servidor.');
+     deleted++;
+    }catch(err){errors.push((kind==='users'?'@'+item.dataset.adminSelectUsername:id)+': '+err.message)}
+   }
+   $(c.all).disabled=false;
+   try{await loadAdmin();msg.textContent=deleted+' de '+count+' item(ns) excluído(s).'+(errors.length?' Falhas: '+errors.join(' | '):'')}catch(err){msg.textContent=deleted+' excluído(s), mas a atualização falhou: '+err.message}
+  });
+ }
+ const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), maxInput=$('admin-invite-max');
  function syncInviteType(){const single=inviteType.value==='single';maxField.hidden=single;maxField.style.display=single?'none':'grid';maxInput.required=!single;maxInput.disabled=single;if(!single&&!maxInput.value)maxInput.value='10';}
  inviteType.addEventListener('change',syncInviteType);syncInviteType();
   $('admin-invite-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const type=f.get('type');const maxUses=type==='single'?1:Number(f.get('maxUses'));try{const d=await api('/api/admin/invites',{method:'POST',body:JSON.stringify({type,maxUses})});$('admin-new-code').innerHTML='<div class="result"><strong>Convite criado — copie agora, ele não será exibido novamente:</strong><p><code>'+esc(d.invite.code)+'</code></p><button class="btn ghost small" id="admin-copy-code" type="button">Copiar código</button></div>';$('admin-copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(d.invite.code);msg.textContent='Código copiado.'}catch(_){msg.textContent='Selecione e copie o código manualmente.'}};await loadAdmin()}catch(err){msg.textContent=err.message}});
