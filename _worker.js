@@ -319,18 +319,21 @@ async function handleApi(request, env) {
         signal: controller.signal
       });
       response = await invoke(preferred);
-      if (response.status === 404) {
+      if ([404, 429, 503].includes(response.status)) {
+        // Em caso de modelo indisponível, cota ou sobrecarga, consultar
+        // alternativas habilitadas para esta chave e tentar no máximo duas.
         const listing = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=100", {
           headers: { "x-goog-api-key": env.GEMINI_API_KEY }, signal: controller.signal
         });
         if (listing.ok) {
           const available = await listing.json();
           const models = (available.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent")).map(m => String(m.name || "").replace("models/", ""));
-          const alternatives = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash"].filter(m => m !== preferred);
-          const candidate = alternatives.find(m => models.includes(m)) || models.find(m => /^gemini-.*flash/.test(m)) || models.find(m => /^gemini-/.test(m));
-          if (candidate && candidate !== preferred) {
+          const priority = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3-flash"];
+          const candidates = [...priority.filter(m => models.includes(m)), ...models.filter(m => /^gemini-.*flash/.test(m))].filter((m, i, all) => m !== preferred && all.indexOf(m) === i).slice(0, 2);
+          for (const candidate of candidates) {
             console.log("Gemini model fallback", candidate);
             response = await invoke(candidate);
+            if (response.ok || ![404, 429, 503].includes(response.status)) break;
           }
         } else {
           console.error("Gemini model discovery status", listing.status);
