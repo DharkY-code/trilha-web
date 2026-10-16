@@ -1,5 +1,5 @@
 /* Dhark Library — cache offline. */
-const CACHE_VERSION = "dhark-library-v15";
+const CACHE_VERSION = "dhark-library-v16";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.svg", "./icons/icon-512.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_VERSION).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
@@ -11,6 +11,11 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
   const url = new URL(request.url);
+  // Respostas autenticadas nunca devem entrar no Cache Storage da PWA.
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(request, {cache:"no-store"}));
+    return;
+  }
   if (url.pathname.endsWith("/service-worker.js")) {
     event.respondWith(fetch(request, {cache:"no-store"}));
     return;
