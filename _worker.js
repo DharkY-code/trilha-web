@@ -223,10 +223,11 @@ async function handleApi(request, env) {
     if (computed.hash !== user.password_hash) return json({ error: "Usuário ou senha inválidos." }, 401);
     const token = randomToken();
     const tokenHash = await sha256(token);
+    const sessionSeconds=temp?Math.min(SESSION_DAYS*86400,Math.max(1,temp.expires_at-Math.floor(Date.now()/1000))):SESSION_DAYS*86400;
     await env.DB.prepare("INSERT INTO sessions (id, user_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, unixepoch()+?, unixepoch())")
-      .bind(crypto.randomUUID(), user.id, tokenHash, SESSION_DAYS * 86400).run();
+      .bind(crypto.randomUUID(), user.id, tokenHash, sessionSeconds).run();
     return json({ ok: true, user: { username: user.username, displayName: user.display_name, area: user.area } }, 200, {
-      "set-cookie": sessionCookie(token),
+      "set-cookie": sessionCookie(token,sessionSeconds),
     });
   }
 
