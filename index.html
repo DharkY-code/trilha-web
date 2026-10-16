@@ -411,6 +411,38 @@ html[data-dhark-auth="app"] #dominios>.resource-grid{grid-template-columns:minma
 /* Espaçamento consistente: títulos e conteúdo das abas sempre adjacentes */
 html[data-dhark-auth="app"] .main>.top{margin-bottom:18px!important}
 html[data-dhark-auth="app"] .main>.page.active:not(#inicio){padding-top:0!important;scroll-margin-top:12px}
+
+/* Caderno v4: estrutura independente, sem depender do grid antigo. */
+html[data-dhark-auth="app"] #caderno.page.active{display:block!important;width:100%;max-width:100%;padding:0!important;margin:0!important}
+#caderno .notebook-top{display:block!important;margin:0 0 22px!important;padding:18px 0 22px!important;border-bottom:1px solid #e3d8ea}
+#caderno .notebook-top h2{font-size:clamp(38px,5vw,62px)!important;line-height:1.08;margin:9px 0 12px}
+#caderno .notebook-workspace{display:grid!important;grid-template-columns:minmax(235px,310px) minmax(0,1fr)!important;gap:20px;align-items:start;width:100%;max-width:100%;margin:0!important}
+#caderno .notebook-shelf,#caderno .notebook-editor{display:block;min-width:0;border:1px solid #e5d9eb;border-radius:20px;background:#fff;overflow:hidden;box-shadow:0 8px 25px #2816360c}
+#caderno .notebook-shelf{background:#f4edf9}
+#caderno .notebook-shelf-head{padding:25px 23px 20px;background:#e9dcf2;border-bottom:1px solid #decde9}
+#caderno .notebook-mini-label{display:block;color:#8a62a5;font-size:10px;font-weight:900;letter-spacing:.15em;margin-bottom:8px}
+#caderno .notebook-shelf h3,#caderno .notebook-editor h3{font-size:21px;letter-spacing:-.035em;color:#32213e;margin:0}
+#caderno .notebook-shelf-head p{color:#806f8d;font-size:13px;margin:8px 0 0}
+#caderno .notebook-shelf-content{padding:23px}
+#caderno .notebook-shelf-content .field{margin:0 0 12px}
+#caderno .notebook-create{width:100%;justify-content:center}
+#caderno .notebook-divider{display:flex;align-items:center;gap:12px;margin:26px 0 14px;font-size:10px;font-weight:900;letter-spacing:.13em;color:#917a9d}
+#caderno .notebook-divider:after{content:"";height:1px;background:#dacbe4;flex:1}
+#caderno #notebook-list{display:flex;flex-direction:column;gap:10px;min-height:45px}
+#caderno .notebook-editor-toolbar{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:21px 26px;background:#f7f1fa;border-bottom:1px solid #e9deee}
+#caderno #note-save-status{flex:0 0 auto}
+#caderno .notebook-paper{padding:25px 29px 18px;background:#fff}
+#caderno .notebook-title-field{margin:0 0 21px}
+#caderno .notebook-title-field input{font-size:23px;font-weight:750;letter-spacing:-.035em;border:0;border-bottom:2px solid #e6dcea;border-radius:0;padding:13px 0;background:transparent;width:100%}
+#caderno .notebook-body-field{margin:0}
+#caderno .notebook-body-field textarea{display:block;box-sizing:border-box;width:100%;min-height:440px;resize:vertical;font-size:16px;line-height:32px;padding:12px 16px;border:1px solid #e8deec;border-radius:12px;background:repeating-linear-gradient(to bottom,#fff 0px,#fff 31px,#e8dfed 32px);background-attachment:local;color:#30243c}
+#caderno .notebook-editor-actions{display:flex;flex-wrap:wrap;gap:10px;padding:18px 26px 23px;border-bottom:1px solid #ebe1ef}
+#caderno .notebook-notes{padding:24px 26px 27px;background:#fcfafe}
+#caderno .notebook-notes-heading{margin-bottom:16px}
+#caderno #notes-list{margin:0;display:flex;flex-direction:column;gap:10px}
+#caderno .notebook-workspace .field label{display:block;margin-bottom:8px;font-weight:750;color:#6e577e}
+@media(max-width:900px){#caderno .notebook-workspace{grid-template-columns:minmax(0,1fr)!important}#caderno .notebook-shelf-head{padding:20px}#caderno .notebook-shelf-content{padding:20px}}
+@media(max-width:650px){#caderno .notebook-top{padding:10px 0 20px!important}#caderno .notebook-top h2{font-size:42px!important}#caderno .notebook-workspace{gap:14px}#caderno .notebook-editor-toolbar{padding:18px 16px;align-items:flex-start;flex-wrap:wrap}#caderno .notebook-paper{padding:19px 15px}#caderno .notebook-editor-actions{padding:16px;gap:8px}#caderno .notebook-editor-actions .btn{flex:1 1 auto}#caderno .notebook-notes{padding:20px 16px}#caderno .notebook-body-field textarea{min-height:330px;padding:10px 12px}}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
@@ -520,10 +552,18 @@ html[data-dhark-auth="app"] .main>.page.active:not(#inicio){padding-top:0!import
 
 <section class="page" id="caderno">
 <div class="notebook-top"><span class="studio-index">SEU ATELIÊ DE ESCRITA</span><h2>Meu caderno<span>.</span></h2><p>Um lugar para pensar, escrever e guardar o que você aprende.</p></div>
-<div class="notebook-workspace"><div class="grid" style="grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr);gap:16px;margin-top:16px">
- <div class="card"><h3 style="margin-top:0">Criar um caderno</h3><div class="field"><label for="notebook-name">Nome do caderno</label><input id="notebook-name" placeholder="Ex.: HTML semântico, CSS, JavaScript"></div><button class="btn" onclick="createNotebook()">+ Criar caderno</button><h3 style="margin-top:24px">Meus cadernos</h3><div id="notebook-list" class="lesson-list"></div></div>
- <div class="card"><div class="row"><h3 id="note-editor-title" style="margin-top:0">Nova anotação</h3><span class="tag" id="note-save-status">Salvo localmente</span></div><div class="field"><label for="note-title">Título da anotação</label><input id="note-title" placeholder="Ex.: Diferença entre main e section"></div><div class="field"><label for="note-body">Anotação</label><textarea id="note-body" rows="12" placeholder="Escreva aqui suas explicações, exemplos de código, dúvidas e resumos..."></textarea></div><div class="row" style="flex-wrap:wrap"><button class="btn" onclick="saveNote()">Salvar anotação</button><button class="btn ghost" onclick="newNote()">Nova anotação</button><button class="btn ghost" onclick="exportNotebooks()">Exportar cadernos</button></div><h3 style="margin-top:24px">Anotações deste caderno</h3><div id="notes-list" class="lesson-list"></div></div>
-</div></div>
+<div class="notebook-workspace">
+ <aside class="notebook-shelf">
+  <div class="notebook-shelf-head"><span class="notebook-mini-label">BIBLIOTECA PESSOAL</span><h3>Seus cadernos</h3><p>Organize cada assunto em seu próprio espaço.</p></div>
+  <div class="notebook-shelf-content"><div class="field"><label for="notebook-name">Nome do novo caderno</label><input id="notebook-name" placeholder="Ex.: HTML, CSS, JavaScript"></div><button class="btn notebook-create" onclick="createNotebook()">+ Criar caderno</button><div class="notebook-divider"><span>CADERNOS SALVOS</span></div><div id="notebook-list" class="lesson-list"></div></div>
+ </aside>
+ <div class="notebook-editor">
+  <div class="notebook-editor-toolbar"><div><span class="notebook-mini-label">PÁGINA DE ESTUDO</span><h3 id="note-editor-title">Nova anotação</h3></div><span class="tag" id="note-save-status">Salvo localmente</span></div>
+  <div class="notebook-paper"><div class="field notebook-title-field"><label for="note-title">Título da anotação</label><input id="note-title" placeholder="Dê um título para sua página"></div><div class="field notebook-body-field"><label for="note-body">Suas ideias e aprendizados</label><textarea id="note-body" rows="12" placeholder="Escreva aqui suas explicações, exemplos de código, dúvidas e resumos..."></textarea></div></div>
+  <div class="notebook-editor-actions"><button class="btn" onclick="saveNote()">Salvar anotação</button><button class="btn ghost" onclick="newNote()">Nova anotação</button><button class="btn ghost" onclick="exportNotebooks()">Exportar cadernos</button></div>
+  <div class="notebook-notes"><div class="notebook-notes-heading"><span class="notebook-mini-label">ARQUIVO</span><h3>Anotações deste caderno</h3></div><div id="notes-list" class="lesson-list"></div></div>
+ </div>
+</div>
 </section>
 <section class="page" id="pratica">
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">⌘</span><div><span class="dhark-section-kicker">DHARK / PRATICA</span><h2>Estúdio de prática</h2><p>Aprenda construindo e experimentando.</p></div></div>
