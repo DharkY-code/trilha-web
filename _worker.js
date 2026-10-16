@@ -183,7 +183,7 @@ async function handleApi(request, env) {
     if(!invite)return json({error:"Convite inválido, expirado, revogado ou sem utilizações restantes."},403);
     const {salt,hash}=await passwordHash(password), id=crypto.randomUUID();
     try {
-      await env.DB.prepare("INSERT INTO users (id,username,display_name,area,password_salt,password_hash,created_at,role,status) VALUES (?,?,?,?,?,?,unixepoch(),'user','active')").bind(id,username,displayName,area,salt,hash).run();
+      await env.DB.prepare("INSERT INTO users (id,username,display_name,area,password_salt,password_hash,created_at,role,status) VALUES (?,?,?,?,?,?,unixepoch(),'user','active')").bind(id,username,displayName,"programacao",salt,hash).run();
       await env.DB.prepare("INSERT INTO user_profiles (user_id,learning_goal,level) VALUES (?,?,?)").bind(id,goal,level).run();
       const use=await env.DB.prepare("UPDATE invites SET used_count=used_count+1 WHERE id=? AND revoked_at IS NULL AND used_count<max_uses").bind(invite.id).run();
       if(!use.meta?.changes){await env.DB.prepare("DELETE FROM users WHERE id=?").bind(id).run();return json({error:"Convite atingiu o limite. Peça outro código."},409);}
