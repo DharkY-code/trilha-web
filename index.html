@@ -1081,6 +1081,21 @@ async function dharkSetupPersonalStudy(user){
  if(!dharkPersonalTrack)void dharkGeneratePersonalTrack();
  showPage('minha-trilha-ia',false);
 }
+function dharkShowTemporaryStudyPlan(error){
+ const profile=dharkPersonalProfile||{},goal=String(profile.goal||'seus objetivos de estudo');
+ const area=(goal.match(/Área principal:\s*([^\n]+)/i)||[])[1]||'seu assunto';
+ const status=document.getElementById('personal-track-status'),title=document.getElementById('personal-track-title'),list=document.getElementById('personal-track-modules'),btn=document.getElementById('personal-track-generate');
+ title.textContent='Seu plano inicial de estudos';
+ status.textContent='O Gemini está temporariamente indisponível. Este roteiro provisório não foi gerado pela IA. Seus objetivos estão salvos e você pode solicitar a trilha personalizada quando o serviço voltar.';
+ list.replaceChildren();
+ const steps=[
+  ['1. Organize o que deseja aprender','Área de estudo: '+area+'\n\nSeu objetivo cadastrado: '+goal+'\n\nSepare 15 minutos para escrever o que você já sabe e quais assuntos ainda parecem difíceis.'],
+  ['2. Comece pelos fundamentos','Escolha um conceito básico de '+area+' que esteja ligado ao seu objetivo. Leia uma explicação em um material confiável e escreva com suas palavras o que entendeu.'],
+  ['3. Pratique e registre dúvidas','Resolva um exercício introdutório de '+area+' de um material confiável. Anote no seu caderno onde encontrou dificuldade. Use o Tutor de IA para tirar dúvidas quando estiver disponível.']
+ ];
+ for(const [heading,body] of steps){const section=document.createElement('section');section.className='personal-module';const h=document.createElement('h3');h.textContent=heading;section.appendChild(h);const p=document.createElement('p');p.className='personal-lesson-content';p.style.padding='0 18px 18px';p.textContent=body;section.appendChild(p);list.appendChild(section)}
+ btn.hidden=false;btn.textContent='Tentar criar minha trilha com IA';
+}
 async function dharkGeneratePersonalTrack(){
  if(!dharkPersonalProfile)return;
  const btn=document.getElementById('personal-track-generate'),status=document.getElementById('personal-track-status');
@@ -1094,7 +1109,7 @@ async function dharkGeneratePersonalTrack(){
   dharkPersonalTrack={title:String(track.title||'Minha trilha').slice(0,140),modules:track.modules.slice(0,8).map(m=>({title:String(m.title||'Módulo').slice(0,140),description:String(m.description||'').slice(0,500),lessons:m.lessons.slice(0,12).map(l=>({title:String(l.title||'Aula').slice(0,180),content:String(l.content||'').slice(0,12000),exercise:String(l.exercise||'').slice(0,2500)}))}))};
   await dharkPersist('ai.personal.track',dharkPersonalTrack);
   dharkRenderPersonalTrack();
- }catch(e){status.textContent='Não foi possível gerar a trilha: '+e.message;btn.hidden=false;btn.textContent='Tentar novamente'}
+ }catch(e){console.warn('Geração de trilha indisponível:',e.message);dharkShowTemporaryStudyPlan(e)}
 }
 function dharkRenderPersonalTrack(){
  const title=document.getElementById('personal-track-title'),status=document.getElementById('personal-track-status'),btn=document.getElementById('personal-track-generate'),list=document.getElementById('personal-track-modules');
