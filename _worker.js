@@ -303,16 +303,38 @@ async function handleApi(request, env) {
       grade: "Você é avaliador formativo da Dhark Library. Compare a pergunta e o contexto com a resposta do estudante. Retorne: Veredito (correta/parcial/incorreta/incerta), Justificativa, Pontos fortes, O que melhorar, Resposta-modelo. Considere respostas alternativas válidas e não afirme certeza quando a questão for ambígua. Não altere notas ou progresso."
     };
     const prompt = "Tema: " + topic + "\\nNível: " + level + "\\nPergunta ou objetivo: " + question + "\\nContexto fornecido: " + context + (mode === "grade" ? "\\nResposta do estudante: " + answer : "");
+    // Descobrir modelos realmente habilitados para esta chave quando o padrão
+    // retorna 404. Nunca enviar a chave ao navegador nem expor lista de modelos.
+    const preferred = String(env.GEMINI_MODEL || "gemini-2.5-flash").replace(/^models\\//, "");
+    const payload = JSON.stringify({ systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "lesson" ? 2500 : 1400 } });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
     let response;
     try {
-      response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(env.GEMINI_MODEL || "gemini-2.5-flash") + ":generateContent", {
+      const invoke = model => fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "lesson" ? 2500 : 1400 } }),
+        body: payload,
         signal: controller.signal
       });
+      response = await invoke(preferred);
+      if (response.status === 404) {
+        const listing = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=100", {
+          headers: { "x-goog-api-key": env.GEMINI_API_KEY }, signal: controller.signal
+        });
+        if (listing.ok) {
+          const available = await listing.json();
+          const models = (available.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent")).map(m => String(m.name || "").replace(/^models\\//, ""));
+          const alternatives = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"].filter(m => m !== preferred);
+          const candidate = alternatives.find(m => models.includes(m)) || models.find(m => /^gemini-.*flash/.test(m)) || models.find(m => /^gemini-/.test(m));
+          if (candidate && candidate !== preferred) {
+            console.log("Gemini model fallback", candidate);
+            response = await invoke(candidate);
+          }
+        } else {
+          console.error("Gemini model discovery status", listing.status);
+        }
+      }
     } catch (error) {
       return json({ error: "Não foi possível conectar ao Gemini. Tente novamente." }, 502);
     } finally { clearTimeout(timeout); }
