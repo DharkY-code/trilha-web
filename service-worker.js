@@ -1,5 +1,5 @@
 /* Dhark Library — cache offline. */
-const CACHE_VERSION = "dhark-library-v42";
+const CACHE_VERSION = "dhark-library-v43";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg", "./icons/icon-192.svg", "./icons/icon-512.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_VERSION).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
@@ -14,6 +14,11 @@ self.addEventListener("fetch", event => {
   // Respostas autenticadas nunca devem entrar no Cache Storage da PWA.
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(fetch(request, {cache:"no-store"}));
+    return;
+  }
+  // Painel administrativo deve ser sempre obtido da versão atual, nunca do cache offline.
+  if (url.pathname === "/admin.html") {
+    event.respondWith(fetch(request, { cache: "no-store" }));
     return;
   }
   if (url.pathname.endsWith("/service-worker.js")) {
