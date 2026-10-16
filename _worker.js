@@ -379,7 +379,9 @@ async function handleApi(request, env) {
     const auth = await requireUser(request, env);
     if (auth.response) return auth.response;
     const profile = await env.DB.prepare("SELECT learning_goal, level FROM user_profiles WHERE user_id=?").bind(auth.user.id).first();
-    return json({ role: auth.user.role, area: auth.user.area, goal: profile?.learning_goal || "", level: profile?.level || "basico" });
+    const goal = profile?.learning_goal || "";
+    const selectedArea = /^Área principal:\\s*(.+?)(?:\\r?\\n|$)/i.exec(goal)?.[1]?.trim() || auth.user.area;
+    return json({ role: auth.user.role, area: selectedArea, goal, level: profile?.level || "basico" });
   }
 
   if (path === "/api/me" && request.method === "GET") {
