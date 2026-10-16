@@ -219,6 +219,23 @@ async function handleApi(request, env) {
     });
   }
 
+  if (path === "/api/account" && request.method === "DELETE") {
+    const auth = await requireUser(request, env);
+    if (auth.response) return auth.response;
+    const body = await readJson(request);
+    if (body?.confirm !== "DELETE MY ACCOUNT") return json({ error: "Confirmação inválida." }, 400);
+    const userId = auth.user.id;
+    // Explicitly remove user-owned records first, then invalidate every session and delete the account.
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM progress WHERE user_id=?").bind(userId),
+      env.DB.prepare("DELETE FROM user_profiles WHERE user_id=?").bind(userId),
+      env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(userId),
+      env.DB.prepare("UPDATE invites SET created_by=NULL WHERE created_by=?").bind(userId),
+      env.DB.prepare("DELETE FROM users WHERE id=?").bind(userId)
+    ]);
+    return json({ ok: true, deleted: true }, 200, { "set-cookie": sessionCookie("", 0) });
+  }
+
   if (path === "/api/logout" && request.method === "POST") {
     const token = cookieValue(request, "dhark_session");
     if (token) await env.DB.prepare("DELETE FROM sessions WHERE token_hash=?").bind(await sha256(token)).run();
