@@ -547,7 +547,13 @@ const initialPage=(location.hash||'').replace('#','')||localStorage.getItem('dha
 window.addEventListener('pagehide',()=>{try{localStorage.setItem('trilhaWebState',JSON.stringify(state))}catch(e){}});
 const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#7540a8';applyThemeColor(savedThemeColor,false);document.getElementById('theme-color').addEventListener('input',e=>setThemeColor(e.target.value));
 </script>
-<script id="dhark-inline-admin-script">
+<style id="admin-mobile-actions-style">
+#admin-users-list .lesson-item,#admin-invites-list .lesson-item{min-width:0;overflow-wrap:anywhere}
+#admin-users-list .lesson-item button,#admin-invites-list .lesson-item button{display:inline-flex;width:auto;max-width:100%;min-height:40px;align-items:center;justify-content:center;white-space:normal;line-height:1.25;padding:9px 12px;margin:6px 6px 0 0;flex:0 1 auto}
+#admin-users-list .lesson-item,#admin-invites-list .lesson-item{display:block}
+#admin-users-list .btn.danger{background:#a5263d;color:#fff;border:0}
+@media(max-width:600px){#admin-users-list .lesson-item button,#admin-invites-list .lesson-item button{font-size:14px;min-height:42px;width:auto;max-width:100%}#admin-users-list .lesson-item{padding:12px}}
+</style>\n<script id="dhark-inline-admin-script">
 (function(){
  const $=id=>document.getElementById(id);
  const msg=$('admin-panel-message'), content=$('admin-panel-content');
@@ -560,7 +566,7 @@ const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#7540a8';app
    if(me.user?.role!=='admin')throw new Error('Esta área está disponível somente para a conta administradora.');
    const [iv,us]=await Promise.all([api('/api/admin/invites'),api('/api/admin/users')]);
    $('admin-invites-list').innerHTML=(iv.invites||[]).map(i=>'<div class="lesson-item"><strong>Convite …'+esc(i.code_hint)+'</strong><p>Usos: '+esc(i.used_count)+'/'+esc(i.max_uses)+' · '+(i.revoked_at?'Revogado':'Ativo')+'</p>'+(i.revoked_at?'':'<button class="btn ghost small" type="button" data-admin-revoke="'+esc(i.id)+'">Revogar</button>')+'</div>').join('')||'<p class="muted">Nenhum convite criado.</p>';
-   $('admin-users-list').innerHTML=(us.users||[]).map(u=>'<div class="lesson-item"><strong>'+esc(u.display_name)+' (@'+esc(u.username)+')</strong><p>'+esc(u.area)+' · '+esc(u.level||'nível não definido')+' · '+esc(u.status)+'</p><p>'+esc(u.learning_goal||'')+'</p>'+(u.status==='active'?'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="suspended">Suspender</button>':'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="active">Reativar</button>')+' <button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="revoked">Revogar conta</button></div>').join('')||'<p class="muted">Ainda não há contas cadastradas.</p>';
+   $('admin-users-list').innerHTML=(us.users||[]).map(u=>'<div class="lesson-item"><strong>'+esc(u.display_name)+' (@'+esc(u.username)+')</strong><p>'+esc(u.area)+' · '+esc(u.level||'nível não definido')+' · '+esc(u.status)+'</p><p>'+esc(u.learning_goal||'')+'</p>'+(u.status==='active'?'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="suspended">Suspender</button>':'<button class="btn ghost small" type="button" data-admin-user="'+esc(u.id)+'" data-admin-status="active">Reativar</button>')+' <button class="btn danger small" type="button" data-admin-delete-user="'+esc(u.id)+'" data-admin-username="'+esc(u.username)+'">Deletar conta</button></div>').join('')||'<p class="muted">Ainda não há contas cadastradas.</p>';
    content.hidden=false;msg.textContent='Painel carregado.';
   }catch(e){msg.textContent=e.message;content.hidden=true}
  }
@@ -570,15 +576,21 @@ const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), m
   $('admin-invite-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const type=f.get('type');const maxUses=type==='single'?1:Number(f.get('maxUses'));try{const d=await api('/api/admin/invites',{method:'POST',body:JSON.stringify({type,maxUses})});$('admin-new-code').innerHTML='<div class="result"><strong>Convite criado — copie agora, ele não será exibido novamente:</strong><p><code>'+esc(d.invite.code)+'</code></p><button class="btn ghost small" id="admin-copy-code" type="button">Copiar código</button></div>';$('admin-copy-code').onclick=async()=>{try{await navigator.clipboard.writeText(d.invite.code);msg.textContent='Código copiado.'}catch(_){msg.textContent='Selecione e copie o código manualmente.'}};await loadAdmin()}catch(err){msg.textContent=err.message}});
  $('admin-refresh-button').addEventListener('click',loadAdmin);
  async function performAdminAction(b){
-  b.disabled=true;const original=b.textContent;b.textContent='Processando…';msg.textContent='Processando solicitação…';
+  const original=b.textContent;let confirmed=true;
+  if(b.dataset.adminRevoke)confirmed=confirm('Revogar este convite?');
+  else if(b.dataset.adminDeleteUser)confirmed=confirm('ATENÇÃO: deletar permanentemente a conta @'+b.dataset.adminUsername+' e todo o progresso? Esta ação não pode ser desfeita.');
+  else if(b.dataset.adminUser)confirmed=confirm('Deseja '+(b.dataset.adminStatus==='suspended'?'suspender': 'reativar')+' esta conta?');
+  if(!confirmed)return;
+  b.disabled=true;b.textContent='Processando…';msg.textContent='Processando solicitação…';
   try{
-   if(b.dataset.adminRevoke){if(!confirm('Revogar este convite?'))return;await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'DELETE'});msg.textContent='Convite revogado.';}
-   else if(b.dataset.adminUser){const action=b.dataset.adminStatus==='revoked'?'revogar a conta':b.dataset.adminStatus==='suspended'?'suspender a conta':'reativar a conta';if(!confirm('Deseja '+action+'?'))return;await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'PUT',body:JSON.stringify({status:b.dataset.adminStatus})});msg.textContent='Status da conta atualizado.';}
-   await loadAdmin();
-  }catch(err){msg.textContent='Não foi possível concluir: '+err.message}
+   if(b.dataset.adminRevoke){await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'POST',body:JSON.stringify({action:'revoke'})});}
+   else if(b.dataset.adminDeleteUser){await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminDeleteUser),{method:'DELETE',body:JSON.stringify({confirm:'DELETE',username:b.dataset.adminUsername})});}
+   else if(b.dataset.adminUser){await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'POST',body:JSON.stringify({status:b.dataset.adminStatus})});}
+   msg.textContent='Alteração confirmada pelo servidor.';await loadAdmin();
+  }catch(err){msg.textContent='Falha na operação: '+err.message;content.hidden=false}
   finally{b.disabled=false;b.textContent=original}
  }
- ['admin-invites-list','admin-users-list'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('[data-admin-revoke],[data-admin-user]');if(b)performAdminAction(b)}));
+ ['admin-invites-list','admin-users-list'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('[data-admin-revoke],[data-admin-user],[data-admin-delete-user]');if(b)performAdminAction(b)}));
  document.querySelector('.nav button[data-page="admin"]')?.addEventListener('click',loadAdmin);
 })();
 </script>
