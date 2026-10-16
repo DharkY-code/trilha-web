@@ -190,8 +190,12 @@ async function handleApi(request, env) {
       return json({ok:true,message:"Conta criada. Você já pode entrar."},201);
     } catch(error) {
       await env.DB.prepare("DELETE FROM users WHERE id=?").bind(id).run();
-      if(String(error?.message||"").includes("UNIQUE"))return json({error:"Nome de usuário já utilizado."},409);
-      throw error;
+      const detail=String(error?.message||"");
+      console.error("Signup D1 failure", { category: /CHECK constraint/i.test(detail)?"check":/FOREIGN KEY/i.test(detail)?"foreign_key":/no such table/i.test(detail)?"missing_table":/UNIQUE/i.test(detail)?"unique":"database", message:detail.slice(0,350) });
+      if(/UNIQUE/i.test(detail))return json({error:"Nome de usuário já utilizado."},409);
+      if(/CHECK constraint/i.test(detail))return json({error:"O banco de dados ainda restringe os tipos de área de estudo. É necessário atualizar a estrutura D1 para permitir novas áreas."},503);
+      if(/no such table|no such column/i.test(detail))return json({error:"A estrutura do banco D1 está desatualizada. Verifique as migrations de usuários e perfis."},503);
+      return json({error:"Falha ao criar conta no banco de dados. Consulte os logs do Worker em POST /api/signup."},500);
     }
   }
 
