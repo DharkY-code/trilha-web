@@ -536,6 +536,11 @@ html[data-dhark-auth="app"] #caderno.page.active>.notebook-top:after{
 #caderno .simple-notebook-textarea:disabled{opacity:.6}
 @media(max-width:600px){.simple-notebook-writing{padding:12px}.simple-notebook-textarea{min-height:55vh;padding:14px}.simple-notebook-bar{align-items:stretch}}
 </style>
+<style id="dhark-personal-track-style">
+body.dhark-personal-account .nav button[data-page="inicio"],body.dhark-personal-account .nav button[data-page="pratica"],body.dhark-personal-account .nav button[data-page="prova"],body.dhark-personal-account .nav button[data-page="dominios"],body.dhark-personal-account .nav button[data-page="config"]{display:none!important}
+body.dhark-personal-account .side-note{display:none}
+.dhark-personal-track{margin-top:18px}.personal-module{border:1px solid var(--border,#e9e0ef);border-radius:16px;margin:16px 0;overflow:hidden}.personal-module h3{padding:18px;margin:0;background:var(--accent-soft,#f7f2fa)}.personal-lesson{border-top:1px solid var(--border,#e9e0ef);padding:16px}.personal-lesson summary{cursor:pointer;font-weight:750}.personal-lesson-content{white-space:pre-wrap;line-height:1.85;margin:14px 0}.personal-lesson button{margin-top:10px}
+</style>
 <style id="auth-gate-style">
 .app{display:none!important}
 #auth-gate{min-height:100vh;display:none;place-items:center;padding:24px;background:radial-gradient(ellipse at top,#eadcf8 0%,#f7f4fb 55%,#eee8f5 100%);font-family:Inter,system-ui,-apple-system,sans-serif;color:#241631}
@@ -619,6 +624,10 @@ html[data-dhark-auth="app"] #caderno.page.active>.notebook-top:after{
 </div>
 </section>
 
+<section class="page" id="minha-trilha-ia">
+<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">◇</span><div><span class="dhark-section-kicker">DHARK / SEU PLANO</span><h2>Minha trilha personalizada</h2><p>Uma jornada criada para seus objetivos e suas dificuldades.</p></div></div>
+<div class="card dhark-personal-track"><div class="eyebrow">SEU CAMINHO DE ESTUDOS</div><h2 id="personal-track-title">Preparando sua trilha…</h2><p id="personal-track-goal" class="muted"></p><p id="personal-track-status" role="status" aria-live="polite">Aguarde enquanto preparamos suas aulas.</p><button class="btn" type="button" id="personal-track-generate" onclick="dharkGeneratePersonalTrack()" hidden>Gerar minha trilha com IA</button><div id="personal-track-modules"></div></div>
+</section>
 <section class="page" id="trilha">
 <div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">◇</span><div><span class="dhark-section-kicker">DHARK / TRILHA</span><h2>Mapa de evolução</h2><p>Uma jornada organizada por etapas.</p></div></div>
 <div class="card"><div class="eyebrow">Currículo progressivo</div><h2>Do primeiro arquivo ao site completo</h2><p class="muted">Cada nível combina explicação, material de referência, prática e um critério de saída. As provas objetivas são corrigidas automaticamente. A aprovação libera o próximo nível; desafios abertos ainda exigem revisão pelos critérios indicados.</p></div>
