@@ -1770,6 +1770,28 @@ document.getElementById('dhark-profile-name')?.addEventListener('input',dharkUpd
  body .app>.main{width:100%!important;min-width:0!important;max-width:1300px!important;margin:0 auto!important;padding:36px clamp(22px,3.4vw,54px) 64px!important;box-sizing:border-box!important}
 }
 </style>
+<style id="dhark-layout-grid-repair">
+/* Explicit grid placement: the More overlay is a sibling between sidebar and main. */
+#dhark-more-menu[hidden]{display:none!important}
+@media(min-width:901px){
+ body .app>.side{grid-column:1!important;grid-row:1!important;align-self:start!important}
+ body .app>.main{grid-column:2!important;grid-row:1!important;align-self:start!important;min-width:0!important}
+ body .app>#dhark-more-menu{position:fixed!important;grid-column:auto!important;grid-row:auto!important;z-index:1100!important}
+}
+/* Installed mobile apps always retain compact navigation, even with wide virtual viewport. */
+@media (display-mode:standalone) and (max-device-width:900px){
+ body .app{display:block!important;grid-template-columns:none!important;padding:0 0 0 70px!important;min-height:100dvh!important;width:100%!important;box-sizing:border-box!important}
+ body .app>.side{position:fixed!important;grid-column:auto!important;grid-row:auto!important;top:0!important;left:0!important;right:auto!important;bottom:0!important;transform:none!important;width:70px!important;min-width:70px!important;max-width:70px!important;height:100dvh!important;padding:14px 5px!important;display:flex!important;flex-direction:column!important;overflow-y:auto!important;border-radius:0!important;box-sizing:border-box!important}
+ body .app>.side .nav{display:flex!important;flex-direction:column!important;gap:7px!important}
+ body .app>.side .nav button{display:none!important}
+ body .app>.side .nav button[data-page="inicio"],body .app>.side .nav button[data-page="trilha"],body .app>.side .nav button[data-page="pratica"],body .app>.side .nav button[data-page="tutor"],body .app>.side .nav button[data-page="perfil"]{display:flex!important;flex-direction:column!important;align-items:center!important;min-width:0!important;min-height:59px!important;padding:9px 2px!important;font-size:9px!important}
+ body .app>.side #dhark-more-toggle{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;width:100%!important}
+ body .app>.side .nav-group-label,body .app>.side .side-note{display:none!important}
+ body .app>.side .brand{font-size:0!important}
+ body .app>.main{display:block!important;grid-column:auto!important;grid-row:auto!important;min-width:0!important;max-width:100%!important;width:100%!important;margin:0!important;padding:20px 12px 40px!important;box-sizing:border-box!important}
+ body #dhark-more-menu{left:77px!important;right:8px!important;bottom:auto!important;top:12px!important}
+}
+</style>
 <script id="dhark-auth-gate-script">
 (async function(){
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
