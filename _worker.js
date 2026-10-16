@@ -273,6 +273,59 @@ async function handleApi(request, env) {
     return json({ok:true,status,previousStatus:user.status});
   }
 
+  // Gemini: chave apenas no Worker; chamadas autenticadas e quota por usuário/dia.
+  if (path === "/api/ai" && request.method === "POST") {
+    const auth = await requireUser(request, env);
+    if (auth.response) return auth.response;
+    if (!env.GEMINI_API_KEY) return json({ error: "IA ainda não configurada. Configure o segredo GEMINI_API_KEY no Cloudflare." }, 503);
+    const size = Number(request.headers.get("content-length") || 0);
+    if (size > 18000) return json({ error: "Mensagem muito grande." }, 413);
+    const b = await readJson(request);
+    const mode = String(b?.mode || "");
+    if (!["tutor", "lesson", "grade"].includes(mode)) return json({ error: "Operação inválida." }, 400);
+    const question = String(b?.question || "").trim().slice(0, 5000);
+    const topic = String(b?.topic || "").trim().slice(0, 180);
+    const level = String(b?.level || "iniciante").trim().slice(0, 40);
+    const context = String(b?.context || "").trim().slice(0, 3500);
+    const answer = String(b?.answer || "").trim().slice(0, 3500);
+    if (!question || (mode === "grade" && !answer)) return json({ error: "Preencha os campos obrigatórios." }, 400);
+    if (JSON.stringify(b).length > 18000) return json({ error: "Solicitação muito grande." }, 413);
+    const day = new Date().toISOString().slice(0, 10);
+    const quotaKey = "ai.daily." + day;
+    // Incremento atômico evita ultrapassar o limite mesmo com várias abas.
+    const quota = await env.DB.prepare(
+      "INSERT INTO progress (user_id,record_key,record_json,updated_at) VALUES (?,?, '1',unixepoch()) ON CONFLICT(user_id,record_key) DO UPDATE SET record_json=CAST(CAST(progress.record_json AS INTEGER)+1 AS TEXT),updated_at=unixepoch() WHERE CAST(progress.record_json AS INTEGER)<30 RETURNING record_json"
+    ).bind(auth.user.id, quotaKey).first();
+    if (!quota) return json({ error: "Limite diário de 30 solicitações atingido. Tente novamente amanhã." }, 429);
+    const instructions = {
+      tutor: "Você é o tutor da Dhark Library. Responda em português brasileiro com didática, exemplos concretos e uma sugestão de exercício. Ajude a pessoa a pensar; não invente fatos. Se não tiver certeza, diga.",
+      lesson: "Você é designer instrucional da Dhark Library. Crie uma aula original em português brasileiro sobre o tema solicitado, para o nível indicado. Use os títulos: Objetivo, Pré-requisitos, Explicação passo a passo, Exemplos, Atividade prática, Questões de revisão (3 perguntas), Próximos passos. O tema pode ser qualquer assunto educacional apropriado. Não afirme que a aula foi verificada por especialista.",
+      grade: "Você é avaliador formativo da Dhark Library. Compare a pergunta e o contexto com a resposta do estudante. Retorne: Veredito (correta/parcial/incorreta/incerta), Justificativa, Pontos fortes, O que melhorar, Resposta-modelo. Considere respostas alternativas válidas e não afirme certeza quando a questão for ambígua. Não altere notas ou progresso."
+    };
+    const prompt = "Tema: " + topic + "\\nNível: " + level + "\\nPergunta ou objetivo: " + question + "\\nContexto fornecido: " + context + (mode === "grade" ? "\\nResposta do estudante: " + answer : "");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    let response;
+    try {
+      response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(env.GEMINI_MODEL || "gemini-2.5-flash") + ":generateContent", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions[mode] }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: mode === "grade" ? 0.2 : 0.6, maxOutputTokens: mode === "lesson" ? 2500 : 1400 } }),
+        signal: controller.signal
+      });
+    } catch (error) {
+      return json({ error: "Não foi possível conectar ao Gemini. Tente novamente." }, 502);
+    } finally { clearTimeout(timeout); }
+    if (!response.ok) {
+      console.error("Gemini upstream status", response.status);
+      return json({ error: response.status === 429 ? "Gemini atingiu o limite de solicitações. Tente mais tarde." : "O Gemini não conseguiu responder agora.", status: response.status }, response.status === 429 ? 429 : 502);
+    }
+    const data = await response.json();
+    const text = (data.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("\\n").trim();
+    if (!text) return json({ error: "O Gemini não retornou conteúdo para esta solicitação." }, 502);
+    return json({ text: text.slice(0, 22000), mode, remainingToday: Math.max(0, 30 - Number(quota.record_json)) });
+  }
+
   if (path === "/api/me" && request.method === "GET") {
     const auth = await requireUser(request, env);
     if (auth.response) return auth.response;
