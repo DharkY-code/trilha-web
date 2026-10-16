@@ -338,6 +338,18 @@ async function handleApi(request, env) {
       const current = activeVersion && activeVersion !== "null" ? await env.DB.prepare("SELECT record_key FROM progress WHERE user_id=? AND record_key LIKE ? LIMIT 1").bind(auth.user.id, "ai.personal.track.v" + activeVersion + ".part.%").first() : null;
       countsTowardQuota = Boolean(previous && !current);
     }
+    // Primeira prática e primeira prova por versão da trilha são isentas.
+    // A chave é persistida no D1 somente após a geração bem-sucedida.
+    let assessmentQuotaKey = "";
+    if (mode === "assessment") {
+      const state = await env.DB.prepare("SELECT record_json FROM progress WHERE user_id=? AND record_key='ai.personal.active.version'").bind(auth.user.id).first();
+      let version = "legacy";
+      try { const parsed = JSON.parse(state?.record_json || "null"); if (parsed != null) version = String(parsed).slice(0, 80); } catch (_) {}
+      const kind = /Tipo:\\s*PROVA SEMANAL|para PROVA SEMANAL/i.test(context + " " + question) ? "exam" : "practice";
+      assessmentQuotaKey = "ai.assessment.initial." + version + "." + kind;
+      const first = await env.DB.prepare("SELECT record_key FROM progress WHERE user_id=? AND record_key=?").bind(auth.user.id, assessmentQuotaKey).first();
+      countsTowardQuota = Boolean(first);
+    }
     let remainingToday = 30;
     if (countsTowardQuota) {
       const day = new Date().toISOString().slice(0, 10);
@@ -407,6 +419,9 @@ async function handleApi(request, env) {
     try { data = await response.json(); } catch (_) { return json({ error: "A GroqCloud retornou uma resposta inválida." }, 502); }
     const text = String(data.choices?.[0]?.message?.content || "").trim();
     if (!text) return json({ error: "A GroqCloud não retornou conteúdo para esta solicitação." }, 502);
+    if (mode === "assessment" && assessmentQuotaKey) {
+      await env.DB.prepare("INSERT INTO progress (user_id,record_key,record_json,updated_at) VALUES (?,?,'1',unixepoch()) ON CONFLICT(user_id,record_key) DO NOTHING").bind(auth.user.id, assessmentQuotaKey).run();
+    }
     // Sem ferramenta de pesquisa integrada, não apresentar referências não verificadas.
     return json({ text: text.slice(0, mode === "track" ? 60000 : 22000), sources: [], mode, remainingToday });
   }
