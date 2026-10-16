@@ -221,6 +221,46 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 @media(max-width:650px){.app{padding-bottom:115px}.side{bottom:8px;width:calc(100% - 14px);padding:8px 9px;border-radius:18px}.brand{display:none}.nav{gap:5px}.nav button{font-size:12px;min-height:48px;padding:10px 12px}.main{padding:22px 12px 48px}.top{align-items:flex-start;flex-direction:column;gap:10px;margin-bottom:20px}.top h1{font-size:clamp(29px,8vw,38px)}.pill{align-self:flex-start}.page.active{gap:12px}.dhark-section-banner{padding:20px 17px;gap:13px;min-height:112px;border-radius:17px}.dhark-section-symbol{width:46px;height:46px;flex-basis:46px;font-size:26px;border-radius:13px;box-shadow:3px 3px 0 #e9def2}.dhark-section-banner h2{font-size:22px}.dhark-section-banner p{font-size:12px}.card{padding:18px;border-radius:16px}.card:hover{transform:none}#inicio .hero{padding:27px 22px;min-height:280px;border-radius:18px}#inicio .hero h2{font-size:29px}#inicio .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#inicio .stats .card{min-height:125px;padding:14px}#inicio .dashboard>.card:not(.hero){display:block}#inicio .dashboard>.card:not(.hero)>.field{margin:12px 0}#inicio #home-levels{grid-template-columns:minmax(0,1fr)}#pratica>.grid,#dominios>.resource-grid{grid-template-columns:minmax(0,1fr)!important}.section-head{align-items:flex-start;flex-direction:column}.field input,.field select,.field textarea{font-size:16px}}
 @media(max-width:360px){#inicio .stats{grid-template-columns:minmax(0,1fr)}#inicio .stats .card{min-height:0}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.page.active{animation:none!important}.nav button,.card,.btn,.lesson-item,.progress span{transition:none!important}.nav button:hover,.btn:hover,.lesson-item:hover{transform:none!important}}
+
+/* Layout real da visão geral: editorial, sem bloco roxo, com colunas independentes. */
+#inicio.page.active{display:grid!important;grid-template-columns:minmax(0,1fr) 310px;gap:23px;align-items:start}
+#inicio .dhark-home-intro{grid-column:1/-1;display:flex;align-items:end;justify-content:space-between;gap:25px;min-height:235px;padding:30px 4px 35px;border-bottom:2px solid #e8dff0;background:transparent}
+#inicio .dhark-home-intro h2{font-size:clamp(38px,5.3vw,76px);line-height:1.02;letter-spacing:-.075em;font-weight:850;color:#2f203d;margin:12px 0 16px}
+#inicio .dhark-home-intro h2 em{font-style:normal;color:#9166b2}
+#inicio .dhark-home-intro p{max-width:540px;font-size:15px;color:#83758d;margin:0}
+#inicio .dhark-home-intro .btn{flex:0 0 auto;border-radius:99px;padding:14px 23px}
+#inicio .dhark-home-metrics{grid-column:1/-1;min-width:0}
+#inicio .dhark-home-metrics .stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:auto;gap:12px;margin:0}
+#inicio .dhark-home-metrics .stats .card{min-height:135px;display:flex;flex-direction:column;justify-content:center;padding:22px;background:#fff;border-radius:15px;border-left:4px solid #b398ca}
+#inicio .dhark-home-metrics .stats .card:before{display:none}
+#inicio .dhark-home-workspace{grid-column:2;grid-row:3/5;min-width:0}
+#inicio .dhark-home-workspace .dashboard{display:flex!important;flex-direction:column;gap:15px}
+#inicio .dhark-home-workspace .hero{display:none!important}
+#inicio .dhark-home-workspace .dashboard>.card:not(.hero){display:block!important;grid-column:auto;grid-row:auto;margin:0;min-width:0;padding:24px;border-top:5px solid #8e65b1;background:#fff}
+#inicio .dhark-home-workspace .dashboard>.card:not(.hero)>.field{margin:18px 0 12px}
+#inicio .dhark-home-workspace .dashboard>.card:not(.hero)>.btn{margin-top:0}
+#inicio .dhark-home-history{grid-column:1;grid-row:3;min-width:0}
+#inicio .dhark-home-history .section-head{margin:0 0 14px}
+#inicio .dhark-home-history #study-timeline-card{width:100%;min-width:0}
+#inicio .dhark-home-journey{grid-column:1;grid-row:4;min-width:0}
+#inicio .dhark-home-journey .section-head{margin:18px 0 14px}
+#inicio .dhark-home-journey #home-levels{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px}
+#inicio .dhark-home-journey .level{min-width:0}
+/* Trilha e caderno: nenhum painel introdutório estica com o conteúdo vizinho. */
+#trilha.page.active,#caderno.page.active{grid-template-columns:repeat(12,minmax(0,1fr));align-items:start;grid-auto-rows:min-content}
+#trilha>.dhark-section-banner,#caderno>.dhark-section-banner{grid-column:1/-1;grid-row:1}
+#trilha>.dhark-section-banner+.card,#caderno>.dhark-section-banner+.card{grid-column:1/-1!important;grid-row:2!important;position:static!important;min-height:0!important;max-width:none;width:100%;align-self:start;padding:23px 28px;background:#f1eaf7;color:#30243c}
+#trilha>.dhark-section-banner+.card .eyebrow,#caderno>.dhark-section-banner+.card .eyebrow{color:#8056a4}
+#trilha>.dhark-section-banner+.card h2,#caderno>.dhark-section-banner+.card h2{font-size:22px;letter-spacing:-.035em;margin:8px 0}
+#trilha>.dhark-section-banner+.card p,#caderno>.dhark-section-banner+.card p{color:#776985;max-width:850px;margin-bottom:0}
+#trilha>#all-levels{grid-column:1/9!important;grid-row:3!important;display:grid;grid-template-columns:minmax(0,1fr)!important;margin:0!important;align-self:start}
+#trilha>.card:last-child{grid-column:9/-1!important;grid-row:3!important;align-self:start;margin:0!important;position:sticky;top:20px}
+#caderno>.grid{grid-column:1/-1!important;grid-row:3!important;display:grid!important;grid-template-columns:minmax(250px,.75fr) minmax(0,1.5fr)!important;align-items:start;gap:17px;margin:0!important}
+#caderno>.grid>.card{align-self:start;min-width:0;height:auto}
+#caderno #note-body{min-height:290px}
+@media(max-width:1050px){#inicio.page.active{grid-template-columns:minmax(0,1fr)}#inicio .dhark-home-intro,#inicio .dhark-home-metrics{grid-column:1}#inicio .dhark-home-history{grid-column:1;grid-row:3}#inicio .dhark-home-workspace{grid-column:1;grid-row:4}#inicio .dhark-home-journey{grid-column:1;grid-row:5}#inicio .dhark-home-metrics .stats{grid-template-columns:repeat(2,minmax(0,1fr))}#trilha>#all-levels{grid-column:1/-1!important;grid-row:3!important}#trilha>.card:last-child{grid-column:1/-1!important;grid-row:4!important;position:static}#caderno>.grid{grid-template-columns:minmax(0,1fr)!important}}
+@media(max-width:650px){#inicio .dhark-home-intro{min-height:0;flex-direction:column;align-items:flex-start;gap:23px;padding:15px 0 25px}#inicio .dhark-home-intro h2{font-size:clamp(40px,11vw,57px)}#inicio .dhark-home-intro .btn{width:100%}#inicio .dhark-home-metrics .stats{grid-template-columns:repeat(2,minmax(0,1fr))}#inicio .dhark-home-metrics .stats .card{min-height:125px;padding:15px}#inicio .dhark-home-workspace .dashboard>.card:not(.hero){padding:19px}#trilha>.dhark-section-banner+.card,#caderno>.dhark-section-banner+.card{padding:18px}}
+@media(max-width:360px){#inicio .dhark-home-metrics .stats{grid-template-columns:minmax(0,1fr)}}
 </style>
 <style id="auth-gate-style">
 .app{display:none!important}
@@ -280,22 +320,25 @@ body{background:#f7f5fa;color:#30243c;font-family:Inter,ui-sans-serif,system-ui,
 <header class="top"><div><div class="eyebrow">Seu espaço de aprendizagem</div><h1 id="page-title">Bom dia. Vamos construir?</h1><p class="sub" id="page-sub">Pequenos passos consistentes viram projetos reais.</p></div><div class="pill" id="goal-pill">Meta: 7 h/semana</div></header>
 
 <section class="page active" id="inicio">
-<div class="dhark-section-banner"><span class="dhark-section-symbol" aria-hidden="true">◈</span><div><span class="dhark-section-kicker">DHARK / INICIO</span><h2>Seu painel</h2><p>Acompanhe sua evolução e retome de onde parou.</p></div></div>
-<div class="grid stats">
+<div class="dhark-home-intro"><div><span class="eyebrow">DHARK LIBRARY · SEU ESPAÇO</span><h2>Seu aprendizado,<br><em>no seu ritmo.</em></h2><p>Um lugar para continuar aprendendo, acompanhar suas conquistas e construir novos projetos.</p></div><button class="btn" onclick="showPage('trilha')">Explorar minha trilha <span aria-hidden="true">↗</span></button></div>
+<div class="dhark-home-metrics"><div class="grid stats">
  <div class="card"><div class="stat-label">Horas registradas</div><div class="stat-value" id="hours-stat">0 h</div><div class="stat-foot">Seu tempo de estudo</div></div>
  <div class="card"><div class="stat-label">Meta semanal</div><div class="stat-value" id="goal-stat">7 h</div><div class="stat-foot" id="remaining-stat">7 h para cumprir a meta</div></div>
  <div class="card"><div class="stat-label">Aulas concluídas</div><div class="stat-value" id="lessons-stat">0</div><div class="stat-foot">Marque ao terminar e praticar</div></div>
  <div class="card"><div class="stat-label">Nível atual</div><div class="stat-value" id="level-stat">Nível 1</div><div class="stat-foot">Progressão por competência</div></div>
 </div>
-<div class="grid dashboard">
+</div>
+<div class="dhark-home-workspace"><div class="grid dashboard">
  <div class="card hero"><div class="eyebrow">Seu próximo passo</div><h2>Construa a base. Depois, construa coisas incríveis.</h2><p>Comece pela estrutura da web e avance com projetos pequenos, exercícios e revisões honestas.</p><button class="btn light" onclick="showPage('trilha')">Continuar minha trilha →</button></div>
  <div class="card"><div class="row"><h2 style="font-size:18px;margin:0">Meta da semana</h2><span class="tag" id="weekly-tag">0%</span></div><div class="progress" style="margin-top:18px"><span id="weekly-bar" style="width:0%"></span></div><p class="muted" id="weekly-copy">Registre suas sessões para acompanhar a meta.</p><div class="field"><label for="quick-hours">Registrar sessão de estudo (horas)</label><input type="number" id="quick-hours" min="0.25" max="12" step="0.25" value="1"></div><button class="btn" onclick="logHours()">+ Registrar estudo</button></div>
 </div>
-<div class="section-head"><div><h2>Linha do tempo dos estudos</h2><p>Veja suas horas e aulas registradas nas últimas semanas.</p></div></div>
+</div>
+<div class="dhark-home-history"><div class="section-head"><div><h2>Linha do tempo dos estudos</h2><p>Veja suas horas e aulas registradas nas últimas semanas.</p></div></div>
 <div class="card" id="study-timeline-card"><div class="row"><div><h3 style="margin:0">Horas por semana</h3><p class="muted" style="margin:4px 0 0">O gráfico é atualizado quando você registra estudo ou conclui aulas.</p></div><span class="tag" id="timeline-total">0 h no histórico</span></div><div id="weekly-chart" class="weekly-chart" aria-label="Gráfico de horas estudadas por semana"></div><h3 style="margin:22px 0 8px">Semanas anteriores</h3><div id="weekly-history" class="weekly-history"></div><p class="muted" style="font-size:12px;margin-bottom:0">O histórico começa a ser registrado a partir desta atualização. Semanas antigas sem registros não podem ser reconstruídas.</p></div>
-<div class="section-head"><div><h2>Trilha de aprendizagem</h2><p>Oito níveis, do zero ao projeto publicado.</p></div><button class="btn ghost small" onclick="showPage('trilha')">Ver trilha completa</button></div>
+</div>
+<div class="dhark-home-journey"><div class="section-head"><div><h2>Trilha de aprendizagem</h2><p>Oito níveis, do zero ao projeto publicado.</p></div><button class="btn ghost small" onclick="showPage('trilha')">Ver trilha completa</button></div>
 <div class="grid levels" id="home-levels"></div>
-<div class="footer">Protótipo local: seus registros ficam salvos neste navegador. A integração real com IA e contas sincronizadas requer um serviço de back-end.</div>
+</div>
 </section>
 
 <section class="page" id="trilha">
