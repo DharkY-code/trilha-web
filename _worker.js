@@ -247,7 +247,31 @@ async function handleApi(request, env) {
   if(path==="/api/admin/invites"&&request.method==="POST"){const a=await adminUser(request,env);if(a.response)return a.response;const b=await readJson(request),type=b?.type==="single"?"single":b?.type==="multiple"?"multiple":"",max=type==="single"?1:Number(b?.maxUses);if(!type||!Number.isInteger(max)||max<1||max>10000)return json({error:"Escolha uso único ou limite entre 1 e 10000."},400);const code=inviteCode(),id=crypto.randomUUID();await env.DB.prepare("INSERT INTO invites (id,code_hash,code_hint,max_uses,used_count,created_by,created_at) VALUES (?,?,?,?,0,?,unixepoch())").bind(id,await sha256(code),code.slice(-4),max,a.user.id).run();return json({ok:true,invite:{id,code,maxUses:max,usedCount:0}},201);}
   if(path.startsWith("/api/admin/invites/")&&["DELETE","POST"].includes(request.method)){const a=await adminUser(request,env);if(a.response)return a.response;const id=path.slice("/api/admin/invites/".length).replace(/\\/$/,"");if(!id)return json({error:"ID do convite ausente."},400);const before=await env.DB.prepare("SELECT id,revoked_at FROM invites WHERE id=?").bind(id).first();if(!before)return json({error:"Convite não encontrado."},404);if(before.revoked_at)return json({ok:true,revoked:true,alreadyRevoked:true});await env.DB.prepare("UPDATE invites SET revoked_at=unixepoch() WHERE id=?").bind(id).run();const after=await env.DB.prepare("SELECT revoked_at FROM invites WHERE id=?").bind(id).first();if(!after?.revoked_at)return json({error:"O banco não confirmou a revogação do convite."},500);return json({ok:true,revoked:true});}
   if(path==="/api/admin/users"&&request.method==="GET"){const a=await adminUser(request,env);if(a.response)return a.response;const r=await env.DB.prepare("SELECT u.id,u.username,u.display_name,u.area,u.status,u.created_at,p.learning_goal,p.level FROM users u LEFT JOIN user_profiles p ON p.user_id=u.id WHERE u.role='user' ORDER BY u.created_at DESC LIMIT 500").all();return json({users:r.results||[]});}
-  if(path.startsWith("/api/admin/users/")&&["PUT","POST"].includes(request.method)){const a=await adminUser(request,env);if(a.response)return a.response;const id=path.slice("/api/admin/users/".length).replace(/\\/$/,""),b=await readJson(request),status=b?.status;if(!id)return json({error:"ID da conta ausente."},400);if(!["active","suspended","revoked"].includes(status))return json({error:"Status inválido."},400);const user=await env.DB.prepare("SELECT id,status FROM users WHERE id=? AND role='user'").bind(id).first();if(!user)return json({error:"Conta não encontrada ou não é uma conta de usuário."},404);await env.DB.prepare("UPDATE users SET status=? WHERE id=? AND role='user'").bind(status,id).run();if(status!=="active")await env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(id).run();const after=await env.DB.prepare("SELECT status FROM users WHERE id=?").bind(id).first();if(after?.status!==status)return json({error:"O banco não confirmou a alteração de status."},500);return json({ok:true,status,previousStatus:user.status});}
+  if(path.startsWith("/api/admin/users/")&&["PUT","POST"].includes(request.method)){
+    const a=await adminUser(request,env);if(a.response)return a.response;
+    const id=path.slice("/api/admin/users/".length).replace(/\\/$/,""),b=await readJson(request),status=b?.status;
+    if(!id)return json({error:"ID da conta ausente."},400);
+    if(!["active","suspended","revoked"].includes(status))return json({error:"Status inválido."},400);
+    const user=await env.DB.prepare("SELECT id,status FROM users WHERE id=? AND role='user'").bind(id).first();
+    if(!user)return json({error:"Conta não encontrada ou não é uma conta de usuário."},404);
+    if(status==="revoked"){
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM progress WHERE user_id=?").bind(id),
+        env.DB.prepare("DELETE FROM user_profiles WHERE user_id=?").bind(id),
+        env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(id),
+        env.DB.prepare("DELETE FROM invites WHERE created_by=?").bind(id),
+        env.DB.prepare("DELETE FROM users WHERE id=? AND role='user'").bind(id)
+      ]);
+      const still=await env.DB.prepare("SELECT id FROM users WHERE id=?").bind(id).first();
+      if(still)return json({error:"O banco não confirmou a exclusão da conta."},500);
+      return json({ok:true,status:"revoked",deleted:true,previousStatus:user.status});
+    }
+    await env.DB.prepare("UPDATE users SET status=? WHERE id=? AND role='user'").bind(status,id).run();
+    if(status!=="active")await env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(id).run();
+    const after=await env.DB.prepare("SELECT status FROM users WHERE id=?").bind(id).first();
+    if(after?.status!==status)return json({error:"O banco não confirmou a alteração de status."},500);
+    return json({ok:true,status,previousStatus:user.status});
+  }
 
   if (path === "/api/me" && request.method === "GET") {
     const auth = await requireUser(request, env);
