@@ -808,11 +808,20 @@ function dharkFixPageTop(){
  const header=document.querySelector('.main > .top');
  const page=document.querySelector('.main > .page.active');
  if(!header||!page||page.id==='inicio')return;
+ const first=Array.from(page.children).find(el=>getComputedStyle(el).display!=='none');
+ if(!first)return;
  page.style.removeProperty('margin-top');
  page.style.removeProperty('padding-top');
- const gap=page.getBoundingClientRect().top-header.getBoundingClientRect().bottom;
- if(gap>36){
-   page.style.setProperty('margin-top',(-Math.round(gap-18))+'px','important');
+ first.style.removeProperty('margin-top');
+ // Medir o elemento visível, e não somente a borda da seção:
+ // o espaço relatado estava ENTRE o cabeçalho e o primeiro conteúdo.
+ const headerBottom=header.getBoundingClientRect().bottom;
+ const firstTop=first.getBoundingClientRect().top;
+ const gap=firstTop-headerBottom;
+ if(gap>65){
+   // Corrigir o deslocamento na própria primeira peça do conteúdo.
+   // O fluxo normal move junto os elementos seguintes.
+   first.style.setProperty('margin-top',(-Math.min(Math.round(gap-18),1600))+'px','important');
  }
 }
 function dharkSchedulePageTopFix(){
