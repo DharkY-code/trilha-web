@@ -1443,12 +1443,13 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
  let authAttempt=0;
  function showApp(){document.documentElement.dataset.dharkAuth='app';gate.style.display='none';if(app)app.style.setProperty('display','block','important');}
- async function checkSession(){
+ async function checkSession(options={}){
   const attempt=++authAttempt;
+  const initialCheck=Boolean(options.initial);
   let sessionError='A verificação da sessão não foi concluída.';
   try{
    const r=await fetch('/api/me?check='+Date.now(),{credentials:'same-origin',cache:'no-store'});
-   if(!r.ok){const body=await r.json().catch(()=>({}));sessionError='Sessão recusada pelo servidor (HTTP '+r.status+'): '+(body.error||'sem detalhes');}
+   if(!r.ok){const body=await r.json().catch(()=>({}));if(initialCheck&&r.status===401){sessionError='';}else{sessionError='Sessão recusada pelo servidor (HTTP '+r.status+'): '+(body.error||'sem detalhes');}}
    else{
     const d=await r.json();
     if(attempt!==authAttempt)return false;
@@ -1486,7 +1487,7 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
    if(!confirmed&&gate.style.display!=='none'&&!msg.textContent.includes('HTTP')&&!msg.textContent.includes('/api/me'))throw new Error('O servidor não confirmou sua sessão. Tente novamente.');
   }catch(err){msg.style.color='#9d2c42';msg.textContent=err.message||'Falha de conexão. Tente novamente.';}
  });
- await checkSession();
+ await checkSession({initial:true});
 })();
 </script>
 </body></html>
