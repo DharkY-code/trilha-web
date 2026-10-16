@@ -1070,18 +1070,25 @@ function dharkSetAiMode(mode){
 }
 async function dharkAskAi(){
  const btn=document.getElementById('ai-submit'),status=document.getElementById('ai-status'),output=document.getElementById('ai-output');
- const question=document.getElementById('ai-question').value.trim(),answer='';
- if(!question||(dharkAiMode==='grade'&&!answer)){status.textContent='Preencha a pergunta e, se for uma correção, sua resposta.';return}
- btn.disabled=true;status.textContent='Consultando a GroqCloud...';output.hidden=true;
+ const field=document.getElementById('ai-question'),question=field.value.trim();
+ const chat=document.getElementById('dhark-ai-chat');
+ if(!question){field.focus();return}
+ const add=(role,message)=>{
+  if(!chat)return null;
+  const row=document.createElement('div');row.className='dhark-chat-row '+role;
+  if(role==='bot'){const avatar=document.createElement('div');avatar.className='dhark-chat-avatar';avatar.textContent='🤖';row.append(avatar)}
+  const bubble=document.createElement('div');bubble.className='dhark-chat-bubble';bubble.textContent=message;row.append(bubble);chat.append(row);chat.scrollTop=chat.scrollHeight;return bubble;
+ };
+ add('user',question);field.value='';btn.disabled=true;status.textContent='';
+ const pending=add('bot','Digitando…');
  try{
-  const res=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:dharkAiMode,topic:'',level:'iniciante',question,context:'',answer})});
-  const data=await res.json();if(!res.ok)throw Error(data.error||'Não foi possível gerar a resposta.');
-  dharkAiLast=data.text;document.getElementById('ai-output-text').textContent=data.text;
-  document.getElementById('ai-output-title').textContent=dharkAiMode==='lesson'?'Sua aula personalizada':dharkAiMode==='grade'?'Avaliação da resposta':'Orientação do tutor';
-
-  output.hidden=false;status.textContent='Concluído. Solicitações restantes hoje: '+data.remainingToday+'.';
- }catch(e){status.textContent=e.message||'Erro de conexão.'}finally{btn.disabled=false}
+  const res=await fetch('/api/ai',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({mode:'tutor',topic:'',level:'iniciante',question,context:'',answer:''})});
+  const data=await res.json().catch(()=>({}));if(!res.ok)throw Error(data.error||'Não foi possível gerar a resposta.');
+  dharkAiLast=data.text||'';if(pending)pending.textContent=dharkAiLast||'Não recebi uma resposta. Tente novamente.';
+ }catch(e){if(pending)pending.textContent='Não consegui responder agora. '+(e.message||'Tente novamente.')}
+ finally{btn.disabled=false;if(chat)chat.scrollTop=chat.scrollHeight}
 }
+
 function dharkCopyAi(){if(dharkAiLast&&navigator.clipboard?.writeText)navigator.clipboard.writeText(dharkAiLast).catch(()=>{});}
 async function dharkSaveAiLesson(){
  if(!dharkAiLast||dharkAiMode!=='lesson')return;
@@ -1850,6 +1857,38 @@ document.getElementById('dhark-profile-name')?.addEventListener('input',dharkUpd
  const observer=new MutationObserver(update);document.querySelectorAll('.page').forEach(p=>observer.observe(p,{attributes:true,attributeFilter:['class']}));
  update();
  window.dharkToggleTutor=()=>{if(!fab.hidden)fab.click()};
+})();
+</script>
+<style id="dhark-ai-chat-minimal-style">
+#dhark-ai-window{display:flex!important;flex-direction:column!important;overflow:hidden!important;height:min(610px,calc(100dvh - 32px))!important;max-height:calc(100dvh - 32px)!important;padding:0!important}
+#dhark-ai-window-head{flex:0 0 auto!important;padding:12px 17px!important;margin:0!important;border-bottom:1px solid #e8edf5!important}
+#dhark-ai-window #tutor{flex:1!important;min-height:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important}
+#dhark-ai-window .dhark-ai-panel{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;padding:0!important;margin:0!important;background:#fff!important}
+#dhark-ai-window .dhark-ai-panel>.eyebrow,#dhark-ai-window .dhark-ai-panel>h2,#dhark-ai-window .dhark-ai-panel>p.muted:not(#ai-status),#dhark-ai-window #ai-output,#dhark-ai-window #ai-status,#dhark-ai-window #ai-question-label{display:none!important}
+#dhark-ai-chat{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:17px 14px;display:flex;flex-direction:column;gap:13px;background:#f8faff}
+#dhark-chat-intro{margin:auto;text-align:center;color:#7a879a;font-size:13px;max-width:210px}
+.dhark-chat-row{display:flex;align-items:flex-end;gap:7px;max-width:94%}
+.dhark-chat-row.user{align-self:flex-end;justify-content:flex-end}
+.dhark-chat-row.bot{align-self:flex-start}
+.dhark-chat-avatar{flex:0 0 30px;width:30px;height:30px;border-radius:11px;background:#e6efff;display:grid;place-items:center;font-size:17px}
+.dhark-chat-bubble{background:white;border:1px solid #e6ebf3;border-radius:16px 16px 16px 5px;padding:10px 13px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:13px;color:#22304a}
+.dhark-chat-row.user .dhark-chat-bubble{background:var(--green,#2563eb);border-color:transparent;color:white;border-radius:16px 16px 5px 16px}
+#dhark-ai-window .dhark-ai-panel>.field{margin:0!important;padding:12px 12px 4px!important}
+#dhark-ai-window #ai-question{min-height:42px!important;height:44px!important;max-height:90px!important;resize:vertical!important;padding:11px 12px!important;border-radius:13px!important;font-size:14px!important}
+#dhark-ai-window #ai-submit{margin:0 12px 12px auto!important;padding:9px 17px!important;font-size:13px!important;min-height:36px!important;border-radius:12px!important;width:auto!important}
+@media(max-width:900px){#dhark-ai-window{height:min(540px,calc(100dvh - 24px))!important;max-height:calc(100dvh - 24px)!important}#dhark-ai-dialog{padding:8px!important}#dhark-ai-chat{padding:13px 10px}#dhark-ai-window-head{padding:9px 13px!important}}
+</style>
+<script id="dhark-ai-chat-init">
+(function(){
+ const panel=document.querySelector('#tutor .dhark-ai-panel'),field=document.getElementById('ai-question'),button=document.getElementById('ai-submit');
+ if(!panel||!field||!button)return;
+ const chat=document.createElement('div');chat.id='dhark-ai-chat';chat.setAttribute('role','log');chat.setAttribute('aria-label','Conversa com o tutor');
+ const intro=document.createElement('p');intro.id='dhark-chat-intro';intro.textContent='Oi! 👋 Qual é sua dúvida?';chat.append(intro);
+ panel.insertBefore(chat,panel.querySelector('.field'));
+ field.placeholder='Digite sua dúvida…';field.rows=2;button.textContent='Enviar →';
+ field.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!button.disabled)dharkAskAi()}});
+ const observer=new MutationObserver(()=>{if(chat.querySelector('.dhark-chat-row'))intro.hidden=true});
+ observer.observe(chat,{childList:true});
 })();
 </script>
 <script id="dhark-auth-gate-script">
