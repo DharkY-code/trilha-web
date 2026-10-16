@@ -583,9 +583,16 @@ const inviteType=$('admin-invite-type'), maxField=$('admin-invite-max-field'), m
   if(!confirmed)return;
   b.disabled=true;b.textContent='Processando…';msg.textContent='Processando solicitação…';
   try{
-   if(b.dataset.adminRevoke){await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'POST',body:JSON.stringify({action:'revoke'})});}
-   else if(b.dataset.adminDeleteUser){await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminDeleteUser),{method:'DELETE',body:JSON.stringify({confirm:'DELETE',username:b.dataset.adminUsername})});}
-   else if(b.dataset.adminUser){await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'POST',body:JSON.stringify({status:b.dataset.adminStatus})});}
+   if(b.dataset.adminRevoke){
+    const result=await api('/api/admin/invites/'+encodeURIComponent(b.dataset.adminRevoke),{method:'DELETE'});
+    if(!result.revoked)throw new Error('O servidor não confirmou a revogação do convite.');
+   }else if(b.dataset.adminDeleteUser){
+    const result=await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminDeleteUser),{method:'DELETE'});
+    if(!result.deleted)throw new Error('O servidor não confirmou a exclusão da conta.');
+   }else if(b.dataset.adminUser){
+    const result=await api('/api/admin/users/'+encodeURIComponent(b.dataset.adminUser),{method:'PUT',body:JSON.stringify({status:b.dataset.adminStatus})});
+    if(result.status!==b.dataset.adminStatus)throw new Error('O servidor não confirmou o novo status da conta.');
+   }
    msg.textContent='Alteração confirmada pelo servidor.';await loadAdmin();
   }catch(err){msg.textContent='Falha na operação: '+err.message;content.hidden=false}
   finally{b.disabled=false;b.textContent=original}
