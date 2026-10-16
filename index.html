@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#142b26">
+<meta name="theme-color" content="#1e3a8a">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,7 +12,7 @@
 <style id="dhark-auth-first-paint">html:not([data-dhark-auth]) body{visibility:hidden}#auth-gate{display:none!important}html[data-dhark-auth="login"] #auth-gate{display:grid!important}</style>
 <script id="dhark-account-storage-isolation">
 (function(){
- const keys=new Set(['trilhaWebState','dharkLibraryLastSaved','dharkManuCompleted','dharkLibraryActivePage','trilhaWebThemeColor','dharkLibraryNotebooks']);
+ const keys=new Set(['trilhaWebState','dharkLibraryLastSaved','dharkManuCompleted','dharkLibraryActivePage','trilhaWebThemeColor','dharkLibraryAppearance','dharkLibraryNotebooks']);
  const activeKey='dharkActiveAccountNamespace';
  const rawGet=Storage.prototype.getItem,rawSet=Storage.prototype.setItem,rawRemove=Storage.prototype.removeItem;
  function mapped(storage,key){if(storage!==window.localStorage||!keys.has(String(key)))return String(key);const account=rawGet.call(window.localStorage,activeKey);return account?'account:'+account+':'+String(key):String(key)}
@@ -733,8 +733,9 @@ ORDER BY ano DESC;</code></pre></details></div>
 <div class="field"><label for="weekly-goal">Meta semanal (horas)</label><input type="number" id="weekly-goal" min="4" max="4" value="4" readonly></div><button class="btn" onclick="saveGoal()">Salvar meta</button>
 <div class="field"><label for="daily-goal">Distribuição sugerida</label><select id="daily-goal"><option value="7">7 dias × 1 hora</option><option value="5">5 dias × 1 hora e 24 minutos</option><option value="4">4 dias × 1 hora e 45 minutos</option><option value="3">3 dias × 2 horas e 20 minutos</option></select></div>
 <hr style="border:0;border-top:1px solid var(--line);margin:24px 0"><h3>Personalização visual</h3><p class="muted">Escolha uma cor principal e veja a mudança imediatamente. Sua preferência fica salva neste navegador.</p>
-<div class="field"><label for="theme-color">Cor principal do site</label><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><input type="color" id="theme-color" value="#1f5948" aria-label="Escolher cor principal" style="width:64px;height:48px;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--panel)"><span id="theme-color-value" class="muted">#1F5948</span><button class="btn ghost small" type="button" onclick="resetThemeColor()">Restaurar padrão</button></div></div>
+<div class="field"><label for="theme-color">Cor principal do site</label><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><input type="color" id="theme-color" value="#2563eb" aria-label="Escolher cor principal" style="width:64px;height:48px;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--panel)"><span id="theme-color-value" class="muted">#2563EB</span><button class="btn ghost small" type="button" onclick="resetThemeColor()">Restaurar padrão</button></div></div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 18px" aria-label="Cores predefinidas"><button type="button" class="color-swatch" title="Verde" aria-label="Verde" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:#1f5948" onclick="setThemeColor('#1f5948')"></button><button type="button" class="color-swatch" title="Azul" aria-label="Azul" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:#2457a7" onclick="setThemeColor('#2457a7')"></button><button type="button" class="color-swatch" title="Roxo" aria-label="Roxo" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:#7540a8" onclick="setThemeColor('#7540a8')"></button><button type="button" class="color-swatch" title="Rosa" aria-label="Rosa" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:#b83268" onclick="setThemeColor('#b83268')"></button><button type="button" class="color-swatch" title="Laranja" aria-label="Laranja" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:#b45309" onclick="setThemeColor('#b45309')"></button><button type="button" class="color-swatch" title="Escuro" aria-label="Cinza escuro" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:#374151" onclick="setThemeColor('#374151')"></button></div>
+<div class="field dhark-appearance-setting"><label>Modo de aparência</label><div class="dhark-mode-switch" role="group" aria-label="Escolher aparência"><button type="button" id="dhark-light-mode" aria-pressed="true" onclick="setAppearanceMode('light')">☀ Modo claro</button><button type="button" id="dhark-dark-mode" aria-pressed="false" onclick="setAppearanceMode('dark')">☾ Modo escuro</button></div><p class="muted">Sua escolha é individual e fica salva neste navegador.</p></div>
 <hr style="border:0;border-top:1px solid var(--line);margin:24px 0"><h3>Dados locais</h3><p class="muted">O progresso e os cadernos são salvos na sua conta no servidor e sincronizados entre dispositivos conectados.</p><button class="btn ghost" onclick="exportData()">Exportar progresso JSON</button> <button class="btn ghost" onclick="resetData()">Zerar progresso</button><hr style="border:0;border-top:1px solid var(--line);margin:24px 0"><h3>Excluir conta permanentemente</h3><p class="muted">Apaga sua conta, sessões, progresso sincronizado e perfil. Essa ação não pode ser desfeita.</p><button class="btn danger" id="delete-account-button" type="button">Excluir minha conta e todos os dados</button><p id="delete-account-message" role="status" aria-live="polite"></p></div>
 </section>
 <section class="page" id="admin">
@@ -996,8 +997,18 @@ function logHours(){let n=Number(document.getElementById("quick-hours").value);i
 function renderTimeline(){const chart=document.getElementById('weekly-chart'),list=document.getElementById('weekly-history');if(!chart||!list)return;const now=new Date();const keys=[];for(let i=7;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i*7);keys.push(weekKey(d))}const vals=keys.map(k=>Number(state.history[k]?.hours||0));const max=Math.max(1,...vals);chart.innerHTML=keys.map((k,i)=>`<div class="week-column"><div class="week-hours">${vals[i]}h</div><div class="week-bar-wrap"><div class="week-bar" style="height:${Math.max(vals[i]>0?4:0,vals[i]/max*100)}%" title="${vals[i]} horas"></div></div><div class="week-label">${i===7?'Atual':weekLabel(k)}</div></div>`).join('');const total=vals.reduce((a,b)=>a+b,0);document.getElementById('timeline-total').textContent=total+' h nas últimas 8 semanas';const filled=keys.slice().reverse().filter(k=>state.history[k]&&(Number(state.history[k].hours||0)>0||(state.history[k].lessons||[]).length));list.innerHTML=filled.length?filled.map(k=>{const rec=state.history[k],lessonNames=(rec.lessons||[]).map(x=>typeof x==='string'?x:x.title||'Aula concluída');return `<div class="history-week"><div class="row"><strong>Semana de ${weekLabel(k)}</strong><span class="tag">${Number(rec.hours||0)} h</span></div><div class="muted" style="font-size:13px;margin-top:4px">${lessonNames.length} aula(s) registrada(s)</div>${lessonNames.length?`<ul class="history-lessons">${lessonNames.map(x=>`<li>${String(x).replace(/</g,'&lt;').replace(/>/g,'&gt;')}</li>`).join('')}</ul>`:''}</div>`}).join(''):'<div class="history-empty">Ainda não há semanas anteriores registradas. Registre uma sessão de estudo ou marque uma aula como concluída para começar sua linha do tempo.</div>'}
 function hexToRgb(hex){let h=hex.replace('#','');return {r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)}}
 function applyThemeColor(hex,saveIt=true){if(!/^#[0-9a-fA-F]{6}$/.test(hex))return;let {r,g,b}=hexToRgb(hex);let dark=`#${[r,g,b].map(v=>Math.round(v*0.58).toString(16).padStart(2,'0')).join('')}`;let pale=`#${[r,g,b].map(v=>Math.round(v+(255-v)*0.88).toString(16).padStart(2,'0')).join('')}`;let hover=`#${[r,g,b].map(v=>Math.round(v*0.76).toString(16).padStart(2,'0')).join('')}`;let border=`#${[r,g,b].map(v=>Math.round(v*0.62).toString(16).padStart(2,'0')).join('')}`;let luminance=(0.2126*r+0.7152*g+0.0722*b)/255;let accentInk=luminance>0.62?dark:dark;document.documentElement.style.setProperty('--green',hex);document.documentElement.style.setProperty('--green-dark',dark);document.documentElement.style.setProperty('--mint',pale);document.documentElement.style.setProperty('--accent-soft',pale);document.documentElement.style.setProperty('--accent-ink',accentInk);document.documentElement.style.setProperty('--accent-hover',hover);document.documentElement.style.setProperty('--accent-border',border);let picker=document.getElementById('theme-color');let label=document.getElementById('theme-color-value');if(picker)picker.value=hex;if(label)label.textContent=hex.toUpperCase();document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark);if(saveIt){try{localStorage.setItem('trilhaWebThemeColor',hex)}catch(e){}}}
+function applyAppearanceMode(mode,saveIt=true){
+ const selected=mode==='dark'?'dark':'light';
+ document.documentElement.dataset.appearance=selected;
+ document.documentElement.style.colorScheme=selected;
+ const light=document.getElementById('dhark-light-mode'),dark=document.getElementById('dhark-dark-mode');
+ if(light)light.setAttribute('aria-pressed',String(selected==='light'));
+ if(dark)dark.setAttribute('aria-pressed',String(selected==='dark'));
+ if(saveIt){try{localStorage.setItem('dharkLibraryAppearance',selected)}catch(e){}}
+}
+function setAppearanceMode(mode){applyAppearanceMode(mode,true)}
 function setThemeColor(hex){applyThemeColor(hex,true)}
-function resetThemeColor(){setThemeColor('#70499c')}
+function resetThemeColor(){setThemeColor('#2563eb')}
 function saveGoal(){state.goal=4;document.getElementById('weekly-goal').value=4;save();alert('A meta global é de 4 horas por semana para todas as contas.')}
 function embedVideo(){let id=document.getElementById("video-url").value.trim();let match=id.match(/^[\w-]{11}$/)||id.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);if(match){id=match[1]||match[0]}else{alert("Insira um ID de 11 caracteres ou um link válido do YouTube.");return}document.getElementById("video-box").innerHTML=`<div style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#111"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}" title="Vídeo de estudo incorporado" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`}
 const questionBank=[
@@ -1308,7 +1319,7 @@ normalizeNotebooks();renderNotebooks();
 renderLevels();renderLessons();renderStats();renderTimeline();buildQuiz(state.quiz&&state.quiz.weakTopics&&state.quiz.weakTopics.length?state.quiz.weakTopics:null);
 const initialPage=(location.hash||'').replace('#','')||'inicio';showPage(initialPage,false);
 
-const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#70499c';applyThemeColor(savedThemeColor,false);document.getElementById('theme-color').addEventListener('input',e=>setThemeColor(e.target.value));
+const savedThemeColor=localStorage.getItem('trilhaWebThemeColor')||'#2563eb';applyThemeColor(savedThemeColor,false);applyAppearanceMode(localStorage.getItem('dharkLibraryAppearance')||'light',false);document.getElementById('theme-color').addEventListener('input',e=>setThemeColor(e.target.value));
 </script>
 <style id="admin-mobile-actions-style">
 #admin-users-list .lesson-item,#admin-invites-list .lesson-item{min-width:0;overflow-wrap:anywhere}
@@ -1438,6 +1449,52 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 }
 </script>
 
+<style id="dhark-premium-design">
+/* Dhark Library Premium — shared design tokens; accent remains customizable. */
+:root{--green:#2563eb;--green-dark:#172d59;--bg:#f5f8fc;--panel:#fff;--ink:#17243b;--muted:#63738b;--line:#e2e8f1;--accent-soft:#eff5ff;--accent-ink:#1d4ed8;--accent-hover:#1e40af;--accent-border:#d6e5fc;--shadow:0 12px 38px #1e3a8a0a;--card:#fff;--border:#e2e8f1}
+body{background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.012em}
+.main{max-width:1340px;padding-top:clamp(24px,4vw,52px)}
+.top{border-bottom:1px solid var(--line);margin-bottom:26px}
+.top h1{letter-spacing:-.045em;font-weight:800}
+.card,.pd-stat,.pd-progress-card,.pd-study-card,.pd-actions button,.personal-module{border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:var(--shadow)}
+.card{padding:clamp(18px,3vw,30px)}
+.card h2,.card h3,.pd-section-title h3{letter-spacing:-.035em}
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea{border-radius:12px;border-color:var(--line);background:var(--panel);color:var(--ink)}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent-border);outline-offset:2px}
+.btn{border-radius:12px;transition:filter .15s,transform .15s}
+.btn:hover{filter:brightness(1.04)}
+.side{background:#101f39!important;border:1px solid #ffffff20;box-shadow:0 16px 42px #101e3540;border-radius:22px}
+.nav button{border-radius:11px}
+.nav button.active{background:var(--green)!important;color:white!important;box-shadow:none}
+.brand-mark{background:#edf4ff}
+.dhark-section-banner{border-radius:22px}
+.pd-hero{background:linear-gradient(120deg,#101f39 0%,#1c3863 55%,var(--green) 160%);border:1px solid #ffffff12}
+.pd-hero .pd-eyebrow{color:#c4dbff}
+.pd-main-button{color:#1e3a8a}
+.pd-action-icon,.pd-arrow{color:var(--green)}
+.pd-note{background:var(--accent-soft)}
+.pd-note button{color:var(--accent-ink)}
+.pd-progress-bar{background:var(--accent-soft)}
+.pd-progress-bar span{background:var(--green)}
+.dhark-mode-switch{display:inline-flex;flex-wrap:wrap;gap:7px;padding:5px;background:var(--accent-soft);border:1px solid var(--line);border-radius:14px}
+.dhark-mode-switch button{border:0;background:transparent;color:var(--muted);padding:11px 17px;border-radius:10px;font-weight:750}
+.dhark-mode-switch button[aria-pressed="true"]{background:var(--panel);color:var(--accent-ink);box-shadow:0 2px 9px #14213a12}
+html[data-appearance="dark"]{--bg:#0c1424;--panel:#152237;--ink:#eaf1ff;--muted:#a6b5cb;--line:#2c3b51;--card:#152237;--border:#2c3b51;--accent-soft:#1e314f;--accent-ink:#bcd6ff;--accent-border:#3c5271;--shadow:0 12px 35px #00000025;color-scheme:dark}
+html[data-appearance="dark"] body{background:var(--bg)!important;color:var(--ink)!important}
+html[data-appearance="dark"] .main,html[data-appearance="dark"] .page{color:var(--ink)}
+html[data-appearance="dark"] .card,html[data-appearance="dark"] .pd-stat,html[data-appearance="dark"] .pd-progress-card,html[data-appearance="dark"] .pd-study-card,html[data-appearance="dark"] .pd-actions button,html[data-appearance="dark"] .personal-module,html[data-appearance="dark"] .lesson-item,html[data-appearance="dark"] .history-week,html[data-appearance="dark"] .notice,html[data-appearance="dark"] .result{background:var(--panel)!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-appearance="dark"] .top h1,html[data-appearance="dark"] .card h2,html[data-appearance="dark"] .card h3,html[data-appearance="dark"] .pd-stat strong,html[data-appearance="dark"] .pd-progress-head strong,html[data-appearance="dark"] .pd-actions strong,html[data-appearance="dark"] .pd-section-title h3,html[data-appearance="dark"] .personal-module h3{color:var(--ink)!important}
+html[data-appearance="dark"] .muted,html[data-appearance="dark"] .sub,html[data-appearance="dark"] .pd-stat small,html[data-appearance="dark"] .pd-actions small,html[data-appearance="dark"] .pd-progress-card p{color:var(--muted)!important}
+html[data-appearance="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),html[data-appearance="dark"] textarea,html[data-appearance="dark"] select{background:#111d30!important;color:var(--ink)!important;border-color:var(--line)!important}
+html[data-appearance="dark"] .pd-hero{background:linear-gradient(120deg,#172744,#1d3762)}
+html[data-appearance="dark"] .pd-hero h2,html[data-appearance="dark"] .pd-hero p{color:#fff!important}
+html[data-appearance="dark"] .pd-main-button{background:#e9f2ff;color:#183d79}
+html[data-appearance="dark"] .personal-module h3{background:#1e314f!important}
+html[data-appearance="dark"] .pd-note{background:#1b2e4b}
+html[data-appearance="dark"] .dhark-mode-switch button[aria-pressed="true"]{background:#253c5c;color:#eaf1ff}
+html[data-appearance="dark"] .weekly-chart,html[data-appearance="dark"] .top{border-color:var(--line)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
 <script id="dhark-auth-gate-script">
 (async function(){
  const gate=document.getElementById('auth-gate'), app=document.querySelector('.app'), form=document.getElementById('auth-login-form'), msg=document.getElementById('auth-msg');
